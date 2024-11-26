@@ -35,6 +35,9 @@ func (t *Tilemap) LoadTestMap() error {
 	return nil
 }
 
+func (t *Tilemap) GetTile(id int) {
+
+}
 func (t *Tilemap) Draw(screen *ebiten.Image, camera config.Camera) {
 	for _, layer := range t.Layers {
 		for idx, id := range layer.Data {
