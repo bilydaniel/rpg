@@ -16,6 +16,7 @@ type Game struct {
 }
 
 func initGame() Game {
+
 	return Game{
 		PCharacters: entities.InitPCharacters(),
 		World:       InitWorld(),
