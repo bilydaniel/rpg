@@ -1,15 +1,20 @@
 package main
 
 import (
+	"bilydaniel/rpg/assets"
 	"bilydaniel/rpg/config"
 	"encoding/json"
+	"image"
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Tilemap struct {
-	Layers []TilemapLayer `json:"layers"`
+	Layers         []TilemapLayer `json:"layers"`
+	Assets         assets.Assets
+	TilesetName    string
+	TilesetRowSize int
 }
 
 func InitTilemap() Tilemap {
@@ -22,7 +27,12 @@ type TilemapLayer struct {
 	Height int   `json:"height"`
 }
 
-func (t *Tilemap) LoadTestMap() error {
+func (t *Tilemap) LoadTestMap(assetname string, assets assets.Assets) error {
+	//TODO dont hard code
+	t.Assets = assets
+	t.TilesetName = assetname
+	t.TilesetRowSize = 22
+
 	jsonmap, err := os.ReadFile("assets/maps/test_map.json")
 	if err != nil {
 		return err
@@ -35,10 +45,19 @@ func (t *Tilemap) LoadTestMap() error {
 	return nil
 }
 
-func (t *Tilemap) GetTile(id int) {
+func (t *Tilemap) GetTile(id int, assets assets.Assets) *ebiten.Image {
+	tileX := ((id - 1) % t.TilesetRowSize) * 16
+	tileY := ((id - 1) / t.TilesetRowSize) * 16
 
+	tileset, ok := t.Assets.Tileset[t.TilesetName]
+	if !ok {
+		return nil
+	}
+	return tileset.SubImage(image.Rect(tileX, tileY, tileX+config.TileSize, tileY+config.TileSize)).(*ebiten.Image)
 }
-func (t *Tilemap) Draw(screen *ebiten.Image, camera config.Camera) {
+
+func (t *Tilemap) Draw(screen *ebiten.Image, camera config.Camera, assets assets.Assets) {
+	opts := ebiten.DrawImageOptions{}
 	for _, layer := range t.Layers {
 		for idx, id := range layer.Data {
 			//TODO what can I cashe??
@@ -47,9 +66,11 @@ func (t *Tilemap) Draw(screen *ebiten.Image, camera config.Camera) {
 
 			x *= config.TileSize
 			y *= config.TileSize
+			opts.GeoM.Translate(float64(x), float64(y))
+			tile := t.GetTile(id, assets)
+			screen.DrawImage(tile, &opts)
 
-			tile := t.GetTile()
-
+			opts.GeoM.Reset()
 		}
 	}
 }

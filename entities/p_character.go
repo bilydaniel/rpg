@@ -39,9 +39,7 @@ func InitPCharacters() []*PCharacter {
 	characters := []*PCharacter{}
 	for i := 0; i < 4; i++ {
 		characters = append(characters, InitPCharacter(config.PlayableCharacters[i]))
-
 	}
-
 	return characters
 }
 

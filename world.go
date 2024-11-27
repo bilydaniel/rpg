@@ -1,16 +1,20 @@
 package main
 
+import "bilydaniel/rpg/assets"
+
 type World struct {
 	CurrentTilemap *Tilemap
 	Tilemaps       []*Tilemap
 }
 
-func InitWorld() World {
+func InitWorld(assets assets.Assets) (*World, error) {
 	tilemap := InitTilemap()
-	tilemap.LoadTestMap()
-
-	return World{
-		CurrentTilemap: &tilemap,
+	err := tilemap.LoadTestMap("floor", assets)
+	if err != nil {
+		return nil, err
 	}
 
+	return &World{
+		CurrentTilemap: &tilemap,
+	}, nil
 }
