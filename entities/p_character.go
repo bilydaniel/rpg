@@ -2,6 +2,7 @@ package entities
 
 import (
 	"bilydaniel/rpg/config"
+	"fmt"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -34,6 +35,7 @@ func InitPCharacter(name string) *PCharacter {
 	} else if name == "yellow" {
 		pcharacter.Y = 150
 	}
+	config.AddClicker(&pcharacter)
 	return &pcharacter
 }
 
@@ -46,6 +48,7 @@ func InitPCharacters() []*PCharacter {
 }
 
 func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
+	fmt.Println(p.Selected)
 	pcolor := color.RGBA{}
 	if p.Name == "red" {
 		pcolor = color.RGBA{255, 0, 0, 125}
@@ -60,6 +63,22 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 		pcolor = color.RGBA{255, 255, 0, 125}
 	}
 
+	if p.Selected {
+		pcolor = color.RGBA{255, 255, 255, 125}
+	}
+
 	vector.DrawFilledCircle(screen, float32(p.X)-float32(camera.X), float32(p.Y)-float32(camera.Y), 8*float32(camera.Scale), pcolor, false)
 	//TODO make an image, weird
+}
+
+func (p *PCharacter) OnClick() {
+	if p.Selected {
+		p.Selected = false
+	} else {
+		p.Selected = true
+	}
+}
+
+func (p *PCharacter) ClickCollision(x int, y int, camera config.Camera) bool {
+	return true
 }

@@ -56,10 +56,12 @@ func (g *Game) Update() error {
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		//TODO how to handle other clickable stuff?
-		for _, pchar := range g.PCharacters {
-
+		for _, clicker := range config.Clickers {
+			mx, my := ebiten.CursorPosition()
+			if (*clicker).ClickCollision(mx, my, g.Camera) {
+				(*clicker).OnClick()
+			}
 		}
-
 	}
 
 	return nil
