@@ -67,6 +67,8 @@ func (t *Tilemap) Draw(screen *ebiten.Image, camera config.Camera, assets assets
 			x *= config.TileSize
 			y *= config.TileSize
 			opts.GeoM.Translate(float64(x), float64(y))
+			opts.GeoM.Translate(-camera.X, -camera.Y)
+			opts.GeoM.Scale(camera.Scale, camera.Scale)
 			tile := t.GetTile(id, assets)
 			screen.DrawImage(tile, &opts)
 

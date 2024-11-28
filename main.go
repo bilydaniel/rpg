@@ -30,10 +30,38 @@ func initGame() (*Game, error) {
 		PCharacters: entities.InitPCharacters(),
 		World:       world,
 		Assets:      assets,
+		Camera:      config.Camera{X: 0, Y: 0, Scale: 1.0}, //TODO make an init function
 	}, nil
 }
 
 func (g *Game) Update() error {
+	if ebiten.IsKeyPressed(ebiten.KeyA) {
+		g.Camera.X -= 2
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyD) {
+		g.Camera.X += 2
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyW) {
+		g.Camera.Y -= 2
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyS) {
+		g.Camera.Y += 2
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyR) {
+		g.Camera.Scale -= 0.01
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyF) {
+		g.Camera.Scale += 0.01
+	}
+
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		//TODO how to handle other clickable stuff?
+		for _, pchar := range g.PCharacters {
+
+		}
+
+	}
+
 	return nil
 }
 

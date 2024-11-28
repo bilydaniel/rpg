@@ -9,14 +9,16 @@ import (
 )
 
 type PCharacter struct {
-	Name string
+	Name     string
+	Selected bool
 	Sprite
 	Character
 }
 
 func InitPCharacter(name string) *PCharacter {
 	pcharacter := PCharacter{
-		Name: name,
+		Name:     name,
+		Selected: false,
 		Sprite: Sprite{
 			X: 50,
 			Y: 50,
@@ -58,5 +60,6 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 		pcolor = color.RGBA{255, 255, 0, 125}
 	}
 
-	vector.DrawFilledCircle(screen, float32(p.X), float32(p.Y), 8, pcolor, false)
+	vector.DrawFilledCircle(screen, float32(p.X)-float32(camera.X), float32(p.Y)-float32(camera.Y), 8*float32(camera.Scale), pcolor, false)
+	//TODO make an image, weird
 }
