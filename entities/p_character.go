@@ -2,10 +2,10 @@ package entities
 
 import (
 	"bilydaniel/rpg/config"
-	"fmt"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -48,26 +48,40 @@ func InitPCharacters() []*PCharacter {
 }
 
 func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
-	fmt.Println(p.Selected)
-	pcolor := color.RGBA{}
+	pcolor := color.RGBA{0, 255, 0, 255}
+	tile := &ebiten.Image{}
+	var err error
 	if p.Name == "red" {
-		pcolor = color.RGBA{255, 0, 0, 125}
+		//pcolor = color.RGBA{255, 0, 0, 125}
+		tile, _, err = ebitenutil.NewImageFromFile("assets/images/redchar.png")
 	}
 	if p.Name == "green" {
-		pcolor = color.RGBA{0, 255, 0, 125}
+		//pcolor = color.RGBA{0, 255, 0, 125}
+		tile, _, err = ebitenutil.NewImageFromFile("assets/images/greenchar.png")
 	}
 	if p.Name == "blue" {
-		pcolor = color.RGBA{0, 0, 255, 125}
+		//pcolor = color.RGBA{0, 0, 255, 125}
+		tile, _, err = ebitenutil.NewImageFromFile("assets/images/bluechar.png")
 	}
 	if p.Name == "yellow" {
-		pcolor = color.RGBA{255, 255, 0, 125}
+		//pcolor = color.RGBA{255, 255, 0, 125}
+		tile, _, err = ebitenutil.NewImageFromFile("assets/images/yellowchar.png")
+	}
+	//TODO weird
+	if err != nil {
+		return
 	}
 
+	opts := ebiten.DrawImageOptions{}
 	if p.Selected {
-		pcolor = color.RGBA{255, 255, 255, 125}
+		vector.StrokeCircle(screen, float32(camera.Scale)*(float32(p.X)+8-float32(camera.X)), float32(camera.Scale)*float32(p.Y)+8-float32(camera.Y), 8*float32(camera.Scale), 1, pcolor, true)
+		//opts.ColorScale.SetR(255)
 	}
+	opts.GeoM.Translate(float64(p.X), float64(p.Y))
+	opts.GeoM.Translate(-camera.X, -camera.Y)
+	opts.GeoM.Scale(camera.Scale, camera.Scale)
 
-	vector.DrawFilledCircle(screen, float32(p.X)-float32(camera.X), float32(p.Y)-float32(camera.Y), 8*float32(camera.Scale), pcolor, false)
+	screen.DrawImage(tile, &opts)
 	//TODO make an image, weird
 }
 
