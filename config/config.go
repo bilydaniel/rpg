@@ -9,7 +9,8 @@ const (
 
 	GameName = "RPG"
 
-	TileSize = 16
+	TileSize  = 16
+	Tolerance = 8
 )
 
 var PlayableCharacters map[int]string

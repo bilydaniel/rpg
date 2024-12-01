@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type Game struct {
@@ -54,14 +55,30 @@ func (g *Game) Update() error {
 		g.Camera.Scale += 0.01
 	}
 
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+	//TODO gonna need to change clicking, think it through
+	//Probably should split it up and not generalize
+	// make a menu first so i have an idea about the rest clicking stuff???
+	// probably gonna need some soft of ID system
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		//TODO how to handle other clickable stuff?
-		for _, clicker := range config.Clickers {
+		for _, pchar := range g.PCharacters {
 			mx, my := ebiten.CursorPosition()
-			if (*clicker).ClickCollision(mx, my, g.Camera) {
-				(*clicker).OnClick()
+			if pchar.ClickCollision(mx, my, g.Camera) {
+				pchar.OnClick()
+				break
 			}
 		}
+	}
+
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+		for _, pchar := range g.PCharacters {
+			mx, my := ebiten.CursorPosition()
+			pchar.SetDestination(mx, my, g.Camera)
+		}
+	}
+
+	for _, pchar := range g.PCharacters {
+		pchar.Update()
 	}
 
 	return nil
@@ -70,6 +87,7 @@ func (g *Game) Update() error {
 // TODO CHECK ALL THE NILLS
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	//TODO oad all the assets only once
 	if g.World != nil && g.World.CurrentTilemap != nil {
 		g.World.CurrentTilemap.Draw(screen, g.Camera, g.Assets)
 	}
