@@ -4,6 +4,7 @@ import (
 	"bilydaniel/rpg/assets"
 	"bilydaniel/rpg/config"
 	"bilydaniel/rpg/entities"
+	"bilydaniel/rpg/utils"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -15,6 +16,7 @@ type Game struct {
 	Camera      config.Camera
 	World       *World
 	Assets      assets.Assets
+	Drag        utils.Drag
 }
 
 func initGame() (*Game, error) {
@@ -32,6 +34,7 @@ func initGame() (*Game, error) {
 		World:       world,
 		Assets:      assets,
 		Camera:      config.Camera{X: 0, Y: 0, Scale: 1.0}, //TODO make an init function
+		Drag:        utils.Drag{},
 	}, nil
 }
 
@@ -59,7 +62,12 @@ func (g *Game) Update() error {
 	//Probably should split it up and not generalize
 	// make a menu first so i have an idea about the rest clicking stuff???
 	// probably gonna need some soft of ID system
+
+	// SELECT
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		for _, pchar := range g.PCharacters {
+			pchar.Selected = false
+		}
 		//TODO how to handle other clickable stuff?
 		for _, pchar := range g.PCharacters {
 			mx, my := ebiten.CursorPosition()
@@ -70,6 +78,26 @@ func (g *Game) Update() error {
 		}
 	}
 
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		g.Drag.Dragging = true
+		g.Drag.Startx, g.Drag.Starty = ebiten.CursorPosition()
+	}
+
+	if g.Drag.Dragging {
+		g.Drag.Endx, g.Drag.Endy = ebiten.CursorPosition()
+	}
+
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) && g.Drag.Dragging {
+		g.Drag.Dragging = false
+		//TODO SELECT ALL THE CHARACTERS IN SQUARE
+		for _, pchar := range g.PCharacters {
+			if pchar.RectCollision(mx, my, g.Camera) {
+				pchar.Selected = true
+			}
+		}
+
+	}
+	// MOVEMENT
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
 		for _, pchar := range g.PCharacters {
 			mx, my := ebiten.CursorPosition()
@@ -97,6 +125,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			character.Draw(screen, g.Camera)
 		}
 	}
+
+	g.Drag.Draw(screen, &g.Camera)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

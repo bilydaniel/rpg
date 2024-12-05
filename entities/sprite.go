@@ -21,3 +21,7 @@ type Sprite struct {
 func (s *Sprite) GetCollider() {
 
 }
+
+func (s *Sprite) RectCollision() {
+
+}

@@ -9,10 +9,11 @@ import (
 )
 
 type PCharacter struct {
-	Name         string
-	Selected     bool
-	DestinationX *float64
-	DestinationY *float64
+	Name            string
+	Selected        bool
+	DestinationX    *float64
+	DestinationY    *float64
+	DestinationDist *float64
 	Sprite
 	Character
 }
@@ -57,12 +58,14 @@ func InitPCharacters() []*PCharacter {
 }
 
 func (p *PCharacter) Update() {
+	//TODO do FLOCKING behaviour
 	if p.Selected {
 		if p.DestinationX != nil && p.DestinationY != nil {
 			dx := *p.DestinationX - p.X
 			dy := *p.DestinationY - p.Y
 
 			dist := math.Hypot(dx, dy)
+			p.DestinationDist = &dist
 
 			if dist > config.Tolerance {
 				dxnorm := dx / dist
@@ -116,13 +119,16 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 
 	screen.DrawImage(tile, &opts)
 	if p.DestinationX != nil && p.DestinationY != nil {
-		destinationImage, _, err := ebitenutil.NewImageFromFile("assets/images/target.png")
-		if err == nil {
-			opts.GeoM.Reset()
-			opts.GeoM.Translate(*p.DestinationX, *p.DestinationY)
-			opts.GeoM.Translate(-camera.X, -camera.Y)
-			opts.GeoM.Scale(camera.Scale, camera.Scale)
-			screen.DrawImage(destinationImage, &opts)
+		if p.DestinationDist != nil && *p.DestinationDist > float64(config.Tolerance) {
+			destinationImage, _, err := ebitenutil.NewImageFromFile("assets/images/target.png")
+			if err == nil {
+				opts.GeoM.Reset()
+				//TODO make a function from this
+				opts.GeoM.Translate(*p.DestinationX, *p.DestinationY)
+				opts.GeoM.Translate(-camera.X-config.TileSize/2, -camera.Y-config.TileSize/2)
+				opts.GeoM.Scale(camera.Scale, camera.Scale)
+				screen.DrawImage(destinationImage, &opts)
+			}
 		}
 
 	}
@@ -154,6 +160,11 @@ func (p *PCharacter) ClickCollision(x int, y int, camera config.Camera) bool {
 			}
 		}
 	}
+
+	return false
+}
+
+func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, camera config.Camera) bool {
 
 	return false
 }
