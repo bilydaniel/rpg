@@ -165,8 +165,29 @@ func (p *PCharacter) ClickCollision(x int, y int, camera config.Camera) bool {
 }
 
 func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, camera config.Camera) bool {
+	//TODO try to understand this algorithm a bit more, draw it
+	startx = startx + int(camera.X)
+	starty = starty + int(camera.Y)
+	endx = endx + int(camera.X)
+	endy = endy + int(camera.Y)
 
-	return false
+	charx := p.X + config.TileSize/2
+	chary := p.Y + config.TileSize/2
+
+	rectLeft := math.Min(float64(startx), float64(endx))
+	rectRight := math.Max(float64(startx), float64(endx))
+	rectTop := math.Min(float64(starty), float64(endy))
+	rectBottom := math.Max(float64(starty), float64(endy))
+
+	closestx := math.Max(rectLeft, math.Min(charx, rectRight))
+	closesty := math.Max(rectTop, math.Min(chary, rectBottom))
+
+	distancex := closestx - charx
+	distancey := closesty - chary
+
+	distance := math.Hypot(distancex, distancey)
+
+	return distance <= *p.R
 }
 
 func (p *PCharacter) SetDestination(x int, y int, camera config.Camera) {

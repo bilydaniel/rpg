@@ -91,7 +91,7 @@ func (g *Game) Update() error {
 		g.Drag.Dragging = false
 		//TODO SELECT ALL THE CHARACTERS IN SQUARE
 		for _, pchar := range g.PCharacters {
-			if pchar.RectCollision(mx, my, g.Camera) {
+			if pchar.RectCollision(g.Drag.Startx, g.Drag.Starty, g.Drag.Endx, g.Drag.Endy, g.Camera) {
 				pchar.Selected = true
 			}
 		}
@@ -115,7 +115,7 @@ func (g *Game) Update() error {
 // TODO CHECK ALL THE NILLS
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	//TODO oad all the assets only once
+	//TODO load all the assets only once
 	if g.World != nil && g.World.CurrentTilemap != nil {
 		g.World.CurrentTilemap.Draw(screen, g.Camera, g.Assets)
 	}
