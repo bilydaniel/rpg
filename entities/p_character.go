@@ -2,6 +2,7 @@ package entities
 
 import (
 	"bilydaniel/rpg/config"
+	"fmt"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -24,26 +25,26 @@ func InitPCharacter(name string) *PCharacter {
 	pcharacter := PCharacter{
 		Name:     name,
 		Selected: false,
-		Sprite: Sprite{
-			X:            50,
-			Y:            50,
-			ColliderType: Circle,
-			R:            &r,
-			R_2:          &r_2,
+		Sprite: &CircleSprite{
+			X:   50,
+			Y:   50,
+			R:   r,
+			R_2: r_2,
 		},
 		Character: Character{
-			Speed: 3.0,
+			Speed:          1.0,
+			TurnSpeed:      0.1,
+			AngleTolerance: 0.0,
 		},
 	}
 	if name == "red" {
-		pcharacter.X = 0
-		pcharacter.Y = 0
+		pcharacter.SetPosition(0, 0)
 	} else if name == "green" {
-		pcharacter.Y = 100
+		pcharacter.SetY(100)
 	} else if name == "blue" {
-		pcharacter.X = 150
+		pcharacter.SetX(100)
 	} else if name == "yellow" {
-		pcharacter.Y = 150
+		pcharacter.SetY(150)
 	}
 	config.AddClicker(&pcharacter)
 	return &pcharacter
@@ -59,21 +60,26 @@ func InitPCharacters() []*PCharacter {
 
 func (p *PCharacter) Update() {
 	//TODO do FLOCKING behaviour
-	if p.Selected {
-		if p.DestinationX != nil && p.DestinationY != nil {
-			dx := *p.DestinationX - p.X
-			dy := *p.DestinationY - p.Y
+	if p.DestinationX != nil && p.DestinationY != nil {
+		dx := *p.DestinationX - p.GetX()
+		dy := *p.DestinationY - p.GetY()
 
-			dist := math.Hypot(dx, dy)
-			p.DestinationDist = &dist
+		dist := math.Hypot(dx, dy)
+		p.DestinationDist = &dist
 
-			if dist > config.Tolerance {
-				dxnorm := dx / dist
-				dynorm := dy / dist
+		if p.Angle < p.AngleDestination-p.AngleTolerance {
+			p.Angle += p.TurnSpeed
+		}
 
-				p.X += dxnorm * p.Speed
-				p.Y += dynorm * p.Speed
-			}
+		if p.Angle > p.AngleDestination+p.AngleTolerance {
+			p.Angle -= p.TurnSpeed
+		}
+
+		if dist > config.Tolerance {
+			dxnorm := dx / dist
+			dynorm := dy / dist
+
+			p.SetPosition(p.GetX()+dxnorm*p.Speed, p.GetY()+dynorm*p.Speed)
 		}
 	}
 }
@@ -109,9 +115,15 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 	}
 
 	opts := ebiten.DrawImageOptions{}
-	opts.GeoM.Translate(float64(p.X), float64(p.Y))
+	opts.GeoM.Translate(-8, -8)
+	opts.GeoM.Rotate(p.Angle)
+	opts.GeoM.Translate(8, 8)
+	// TODO SWITCH ASSET IF IN A CERTAIN ANGLE, good for now
+
+	opts.GeoM.Translate(float64(p.GetX()), float64(p.GetY()))
 	opts.GeoM.Translate(-camera.X, -camera.Y)
 	opts.GeoM.Scale(camera.Scale, camera.Scale)
+
 	if p.Selected {
 		screen.DrawImage(circle, &opts)
 
@@ -133,7 +145,6 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 
 	}
 	//vector.StrokeCircle(screen, float32(p.X-camera.X+8), float32(p.Y-camera.Y+8), float32(*p.R), 1.0, color.RGBA{255, 0, 0, 125}, true)
-
 }
 
 func (p *PCharacter) OnClick() {
@@ -145,20 +156,22 @@ func (p *PCharacter) OnClick() {
 }
 
 func (p *PCharacter) ClickCollision(x int, y int, camera config.Camera) bool {
-	if p.ColliderType == Square {
 
-	} else if p.ColliderType == Circle {
+	switch value := p.Sprite.(type) {
+	case *CircleSprite:
 		worldx := (float64(x) / camera.Scale) + camera.X
 		worldy := (float64(y) / camera.Scale) + camera.Y
-		dx := worldx - p.X - config.TileSize/2
-		dy := worldy - p.Y - config.TileSize/2
+		dx := worldx - p.GetX() - config.TileSize/2
+		dy := worldy - p.GetY() - config.TileSize/2
 
 		distance := math.Pow(dx, 2) + math.Pow(dy, 2)
-		if p.R_2 != nil {
-			if distance <= *p.R_2 {
-				return true
-			}
+		if distance <= value.R_2 {
+			return true
 		}
+	case *SquareSprite:
+	//TODO
+	default:
+		fmt.Errorf("Unknown collision type")
 	}
 
 	return false
@@ -166,13 +179,20 @@ func (p *PCharacter) ClickCollision(x int, y int, camera config.Camera) bool {
 
 func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, camera config.Camera) bool {
 	//TODO try to understand this algorithm a bit more, draw it
+
+	circleCollision, ok := p.Sprite.(*CircleSprite)
+	if !ok {
+		fmt.Errorf("Unknown collision type")
+		return false
+	}
+
 	startx = startx + int(camera.X)
 	starty = starty + int(camera.Y)
 	endx = endx + int(camera.X)
 	endy = endy + int(camera.Y)
 
-	charx := p.X + config.TileSize/2
-	chary := p.Y + config.TileSize/2
+	charx := p.GetX() + config.TileSize/2
+	chary := p.GetY() + config.TileSize/2
 
 	rectLeft := math.Min(float64(startx), float64(endx))
 	rectRight := math.Max(float64(startx), float64(endx))
@@ -187,13 +207,18 @@ func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, c
 
 	distance := math.Hypot(distancex, distancey)
 
-	return distance <= *p.R
+	return distance <= circleCollision.R
 }
 
 func (p *PCharacter) SetDestination(x int, y int, camera config.Camera) {
 	if p.Selected {
 		worldx, worldy := camera.ToWorld(float64(x), float64(y))
+
 		p.DestinationX = &worldx
 		p.DestinationY = &worldy
+
+		dx := *p.DestinationX - p.GetX()
+		dy := *p.DestinationY - p.GetY()
+		p.AngleDestination = math.Atan2(-dy, dx)
 	}
 }

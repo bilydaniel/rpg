@@ -78,7 +78,9 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	// DRAGING
+	// TODO combine with selecting
+	if inpututil.MouseButtonPressDuration(ebiten.MouseButtonLeft) > 5 && !g.Drag.Dragging {
 		g.Drag.Dragging = true
 		g.Drag.Startx, g.Drag.Starty = ebiten.CursorPosition()
 	}

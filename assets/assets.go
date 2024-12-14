@@ -10,6 +10,7 @@ type Assets struct {
 }
 
 func InitAssets() (Assets, error) {
+	//TODO add all assets here
 	var err error
 	assets := Assets{Tileset: map[string]*ebiten.Image{}}
 	assets.Tileset["floor"], _, err = ebitenutil.NewImageFromFile("assets/images/tilesets/TilesetFloor.png")
