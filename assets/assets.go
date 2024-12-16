@@ -17,6 +17,11 @@ func InitAssets() (Assets, error) {
 	if err != nil {
 		return assets, err
 	}
+
+	assets.Tileset["objects"], _, err = ebitenutil.NewImageFromFile("assets/images/tilesets/house1.png")
+	if err != nil {
+		return assets, err
+	}
 	return assets, nil
 }
 

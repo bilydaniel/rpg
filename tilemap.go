@@ -22,12 +22,25 @@ func InitTilemap() Tilemap {
 }
 
 type TilemapLayer struct {
-	Data   []int `json:"data"`
-	Width  int   `json:"width"`
-	Height int   `json:"height"`
+	Data    []int    `json:"data"`
+	Objects []Object `json:"objects"`
+	Width   int      `json:"width"`
+	Height  int      `json:"height"`
+}
+
+type Object struct {
+	GID      int     `json:"gid"`
+	ID       int     `json:"id"`
+	X        int     `json:"x"`
+	Y        int     `json:"y"`
+	Width    int     `json:"Width"`
+	Height   int     `json:"Height"`
+	Rotation float64 `json:"rotation"`
+	Visible  bool    `json:"visible"`
 }
 
 func (t *Tilemap) LoadTestMap(assetname string, assets assets.Assets) error {
+	//TODO only load up the map json file and depending on what that file uses, load the rest
 	//TODO dont hard code
 	t.Assets = assets
 	t.TilesetName = assetname

@@ -22,7 +22,7 @@ type Level struct {
 }
 
 type Node struct {
-	*utils.Point
+	utils.Point
 	G, H, F  float64
 	Parent   *Node
 	Walkable bool //TODO change to something more complex, gonna need to check for building, enemies, etc.
@@ -45,7 +45,7 @@ func (pf *PathFinder) ReconstructPath(node *Node) []utils.Point {
 	path := []utils.Point{}
 
 	for currentNode != nil {
-		path = append(path, *currentNode.Point)
+		path = append(path, currentNode.Point)
 		currentNode = currentNode.Parent
 	}
 	return path
@@ -70,7 +70,7 @@ func (level *Level) GetNeighbors(point utils.Point) []*Node {
 	return neighbors
 }
 
-func (pf *PathFinder) ThetaStar(level Level, start utils.Point, end utils.Point) []utils.Point {
+func (pf *PathFinder) AlfaStar(level Level, start utils.Point, end utils.Point) []utils.Point {
 	startNode := level.Grid[int(start.Y)][int(start.X)]
 	endNode := level.Grid[int(end.Y)][int(end.X)]
 
@@ -96,18 +96,38 @@ func (pf *PathFinder) ThetaStar(level Level, start utils.Point, end utils.Point)
 		openSet = openSet[1:]
 		closedSet[current] = true
 
-		neighbors := level.GetNeighbors(*current.Point)
+		neighbors := level.GetNeighbors(current.Point)
 		for _, neighbor := range neighbors {
 			//TODO probably gonna need something more complex than walkable??
 			if closedSet[neighbor] || !neighbor.Walkable {
 				continue
 			}
 
-			tentativeG := current.G + pf.Distance(*current.Point, *neighbor.Point)
+			tentativeG := current.G + pf.Distance(current.Point, neighbor.Point)
+			// POSSIBLE UPGRADE FROM A* TO THETA*, DOESENT SEEM NEEDED
+			/*
+				if current.Parent != nil && pf.LineOfSight(current.Parent.Pos, neighbor.Pos) {
+					newG := current.Parent.G + pf.Distance(current.Parent.Pos, neighbor.Pos)
+					if newG < neighbor.G {
+						neighbor.Parent = current.Parent // Rewire the parent
+						neighbor.G = newG
+						neighbor.F = neighbor.G + neighbor.H
+					}
+				}
+			*/
 
+			sliceContains := utils.SliceContains(openSet, neighbor)
+			if !sliceContains || tentativeG < neighbor.G {
+				neighbor.Parent = current
+				neighbor.G = tentativeG
+				neighbor.H = pf.Distance(neighbor.Point, endNode.Point)
+				neighbor.F = neighbor.G + neighbor.H
+
+				if !sliceContains {
+					openSet = append(openSet, neighbor)
+				}
+			}
 		}
-
 	}
-
 	return nil
 }
