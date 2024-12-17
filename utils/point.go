@@ -1,7 +1,7 @@
 package utils
 
 type Point struct {
-	X, Y float64 // tiles
+	X, Y float64 // tiles, maybe change to int??
 }
 
 // TODO disconected from the rest, kinda reimplementation,

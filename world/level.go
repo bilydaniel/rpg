@@ -9,22 +9,79 @@ package world
 // !!!!!
 
 import (
+	"bilydaniel/rpg/assets"
 	"bilydaniel/rpg/utils"
+	"fmt"
 	"math"
 	"sort"
 )
 
 type Level struct {
-	Grid   [][]*Node
+	Grid   [][]*Tile
 	Width  int //Number of tiles
 	Height int //Number of tiles
+	Assets assets.Assets
+}
+
+func (l *Level) LoadLevel(id string) error {
+
+	tilemap, err := assets.LoadTilemap(id)
+	if err != nil {
+		return err
+	}
+
+	//TODO transofrm the tilemap data into my own
+	//TODO add things to transform when needed
+	//TODO minimal for now
+	/*
+		for _, source := range tilemap.Tilesets {
+
+		}
+	*/
+
+	l.Height = tilemap.Height
+	l.Width = tilemap.Width
+	l.Grid = make([][]*Tile, l.Height)
+
+	for _, layer := range tilemap.Layers {
+		if layer.Type == "tilelayer" {
+			if layer.Name == "tiles" {
+				if len(layer.Data) < l.Width*l.Height {
+					return fmt.Errorf("Tile layer has not enough data")
+				}
+
+				//TODO TEST WITH DIFFERENT WIDTH AND HEIGHT, both 100 now
+				for i := 0; i < l.Height; i++ {
+					//Y
+					l.Grid[i] = make([]*Tile, l.Width)
+					for j := 0; j < l.Width; j++ {
+						//X
+						l.Grid[i][j] = &Tile{ID: layer.Data[(i+1)*j], Point: utils.Point{X: float64(j), Y: float64(i)}}
+					}
+				}
+			}
+		}
+
+		if layer.Type == "objectgroup" {
+			if layer.Name == "buildings" {
+
+			}
+
+		}
+
+	}
+
+	//fmt.Println(tilemap)
+
+	return nil
 
 }
 
-type Node struct {
+type Tile struct {
+	ID int
 	utils.Point
 	G, H, F  float64
-	Parent   *Node
+	Parent   *Tile
 	Walkable bool //TODO change to something more complex, gonna need to check for building, enemies, etc.
 }
 
@@ -40,7 +97,7 @@ func (pf *PathFinder) Distance(start utils.Point, end utils.Point) float64 {
 	return math.Hypot(dx, dy)
 }
 
-func (pf *PathFinder) ReconstructPath(node *Node) []utils.Point {
+func (pf *PathFinder) ReconstructPath(node *Tile) []utils.Point {
 	currentNode := node
 	path := []utils.Point{}
 
@@ -50,8 +107,8 @@ func (pf *PathFinder) ReconstructPath(node *Node) []utils.Point {
 	}
 	return path
 }
-func (level *Level) GetNeighbors(point utils.Point) []*Node {
-	neighbors := []*Node{}
+func (level *Level) GetNeighbors(point utils.Point) []*Tile {
+	neighbors := []*Tile{}
 
 	offsets := [][]int{
 		{-1, -1}, {-1, 0}, {-1, 1},
@@ -74,8 +131,8 @@ func (pf *PathFinder) AlfaStar(level Level, start utils.Point, end utils.Point) 
 	startNode := level.Grid[int(start.Y)][int(start.X)]
 	endNode := level.Grid[int(end.Y)][int(end.X)]
 
-	openSet := []*Node{}
-	closedSet := map[*Node]bool{}
+	openSet := []*Tile{}
+	closedSet := map[*Tile]bool{}
 
 	startNode.G = 0
 	startNode.H = pf.Distance(start, end)

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bilydaniel/rpg/assets"
 	"bilydaniel/rpg/config"
 	"bilydaniel/rpg/entities"
 	"bilydaniel/rpg/utils"
+	"bilydaniel/rpg/world"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -14,25 +14,26 @@ import (
 type Game struct {
 	PCharacters []*entities.PCharacter
 	Camera      config.Camera
-	World       *World
-	Assets      assets.Assets
+	World       *world.World
 	Drag        utils.Drag
 }
 
 func initGame() (*Game, error) {
-	assets, err := assets.InitAssets()
-	if err != nil {
-		return nil, err
-	}
+	//TODO remove, gonna load assets based on the world
+	/*
+		assets, err := assets.InitAssets()
+		if err != nil {
+			return nil, err
+		}
+	*/
 
-	world, err := InitWorld(assets)
+	world, err := world.InitWorld()
 	if err != nil {
 		return nil, err
 	}
 	return &Game{
 		PCharacters: entities.InitPCharacters(),
 		World:       world,
-		Assets:      assets,
 		Camera:      config.Camera{X: 0, Y: 0, Scale: 1.0}, //TODO make an init function
 		Drag:        utils.Drag{},
 	}, nil
@@ -117,18 +118,20 @@ func (g *Game) Update() error {
 // TODO CHECK ALL THE NILLS
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	//TODO load all the assets only once
-	if g.World != nil && g.World.CurrentTilemap != nil {
-		g.World.CurrentTilemap.Draw(screen, g.Camera, g.Assets)
-	}
-
-	for _, character := range g.PCharacters {
-		if character != nil {
-			character.Draw(screen, g.Camera)
+	/*
+		//TODO load all the assets only once
+		if g.World != nil && g.World.CurrentTilemap != nil {
+			g.World.CurrentTilemap.Draw(screen, g.Camera, g.Assets)
 		}
-	}
 
-	g.Drag.Draw(screen, &g.Camera)
+		for _, character := range g.PCharacters {
+			if character != nil {
+				character.Draw(screen, g.Camera)
+			}
+		}
+
+		g.Drag.Draw(screen, &g.Camera)
+	*/
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

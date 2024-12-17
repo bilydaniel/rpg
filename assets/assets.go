@@ -7,6 +7,12 @@ import (
 
 type Assets struct {
 	Tileset map[string]*ebiten.Image
+	//Tilesets map[string]
+}
+
+type Asset struct {
+	//Tileset map[string]*ebiten.Image
+
 }
 
 func InitAssets() (Assets, error) {
