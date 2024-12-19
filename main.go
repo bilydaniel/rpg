@@ -13,9 +13,9 @@ import (
 
 type Game struct {
 	PCharacters []*entities.PCharacter
-	Camera      config.Camera
+	Camera      *config.Camera
 	World       *world.World
-	Drag        utils.Drag
+	Drag        *utils.Drag
 }
 
 func initGame() (*Game, error) {
@@ -34,8 +34,8 @@ func initGame() (*Game, error) {
 	return &Game{
 		PCharacters: entities.InitPCharacters(),
 		World:       world,
-		Camera:      config.Camera{X: 0, Y: 0, Scale: 1.0}, //TODO make an init function
-		Drag:        utils.Drag{},
+		Camera:      &config.Camera{X: 0, Y: 0, Scale: 1.0}, //TODO make an init function
+		Drag:        &utils.Drag{},
 	}, nil
 }
 
@@ -72,7 +72,7 @@ func (g *Game) Update() error {
 		//TODO how to handle other clickable stuff?
 		for _, pchar := range g.PCharacters {
 			mx, my := ebiten.CursorPosition()
-			if pchar.ClickCollision(mx, my, g.Camera) {
+			if pchar.ClickCollision(mx, my, *g.Camera) {
 				pchar.OnClick()
 				break
 			}
@@ -94,7 +94,7 @@ func (g *Game) Update() error {
 		g.Drag.Dragging = false
 		//TODO SELECT ALL THE CHARACTERS IN SQUARE
 		for _, pchar := range g.PCharacters {
-			if pchar.RectCollision(g.Drag.Startx, g.Drag.Starty, g.Drag.Endx, g.Drag.Endy, g.Camera) {
+			if pchar.RectCollision(g.Drag.Startx, g.Drag.Starty, g.Drag.Endx, g.Drag.Endy, *g.Camera) {
 				pchar.Selected = true
 			}
 		}
@@ -104,7 +104,7 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
 		for _, pchar := range g.PCharacters {
 			mx, my := ebiten.CursorPosition()
-			pchar.SetDestination(mx, my, g.Camera)
+			pchar.SetDestination(mx, my, *g.Camera)
 		}
 	}
 
@@ -118,12 +118,12 @@ func (g *Game) Update() error {
 // TODO CHECK ALL THE NILLS
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	/*
-		//TODO load all the assets only once
-		if g.World != nil && g.World.CurrentTilemap != nil {
-			g.World.CurrentTilemap.Draw(screen, g.Camera, g.Assets)
-		}
+	//TODO load all the assets only once
+	if g.World != nil && g.World.CurrentLevel != nil {
+		g.World.CurrentLevel.Draw(screen, g.Camera)
+	}
 
+	/*
 		for _, character := range g.PCharacters {
 			if character != nil {
 				character.Draw(screen, g.Camera)

@@ -18,6 +18,18 @@ type Tileset struct {
 	Firstgid int    `json:"firstgid"`
 	Source   string `json:"source"`
 }
+type TilesetData struct {
+	Image   string     `json:"image"`
+	Columns int        `json:"columns"`
+	Name    string     `json:"name"`
+	Tiles   []TileData `json:"tiles"`
+}
+type TileData struct {
+	ID          int    `json:"id"`
+	Image       string `json:"image"`
+	ImageHeight int    `json:"imageheight"`
+	ImageWidth  int    `json:"imagewidth"`
+}
 
 func InitTilemap() Tilemap {
 	return Tilemap{}

@@ -10,17 +10,28 @@ package world
 
 import (
 	"bilydaniel/rpg/assets"
+	"bilydaniel/rpg/config"
 	"bilydaniel/rpg/utils"
+	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"sort"
+	"strings"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Level struct {
+	Name   string
 	Grid   [][]*Tile
 	Width  int //Number of tiles
 	Height int //Number of tiles
 	Assets assets.Assets
+}
+
+func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera) {
+
 }
 
 func (l *Level) LoadLevel(id string) error {
@@ -33,11 +44,39 @@ func (l *Level) LoadLevel(id string) error {
 	//TODO transofrm the tilemap data into my own
 	//TODO add things to transform when needed
 	//TODO minimal for now
-	/*
-		for _, source := range tilemap.Tilesets {
+	for _, source := range tilemap.Tilesets {
+		path := "assets/maps/" + source.Source
+		sourceFile, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		sourceData := assets.TilesetData{}
+		err = json.Unmarshal(sourceFile, &sourceData)
+		if err != nil {
+			return err
+		}
+
+		if sourceData.Image != "" {
+			//Source is tileset
+			//tilesetAsset := assets.TilesetAsset{}
+			pathsplit := strings.Split(sourceData.Image, "/")
+			splitlen := len(pathsplit)
+			if splitlen != 0 {
+
+			}
+
+			assetPath := "assets/tilesets/" + sourceData.Name + sourceData.Image
+			fmt.Println(assetPath)
+			//tilesetAsset.Img = ebitenutil.NewImageFromFile("")
+			//l.Assets.Video.Tilesets[sourceData.Name] = tilesetAsset
+
+		} else if len(sourceData.Tiles) != 0 {
+			//Source is objects
 
 		}
-	*/
+
+	}
 
 	l.Height = tilemap.Height
 	l.Width = tilemap.Width

@@ -7,12 +7,22 @@ import (
 
 type Assets struct {
 	Tileset map[string]*ebiten.Image
-	//Tilesets map[string]
+	Audio   AudioAssets
+	Video   VideoAssets
 }
 
-type Asset struct {
-	//Tileset map[string]*ebiten.Image
+type AudioAssets struct {
+}
 
+type VideoAssets struct {
+	Tilesets map[string]TilesetAsset
+	Objects  map[string]ObjectAsset
+}
+
+type TilesetAsset struct {
+	Img *ebiten.Image
+}
+type ObjectAsset struct {
 }
 
 func InitAssets() (Assets, error) {
