@@ -27,16 +27,25 @@ type Level struct {
 	Grid   [][]*Tile
 	Width  int //Number of tiles
 	Height int //Number of tiles
-	Assets assets.Assets
 }
 
-func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera) {
+func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Assets) {
+	for y := 0; y < len(l.Grid); y++ {
+		for x := 0; x < len(l.Grid[y]); x++ {
+			tileid := l.Grid[y][x]
+			//TODO REMOVE HARDCODE
+			image := assets.GetImage("floors", "TilesetFloor.png", tileid.ID)
+			opts := ebiten.DrawImageOptions{}
+			screen.DrawImage(image, &opts)
+
+		}
+	}
 
 }
 
-func (l *Level) LoadLevel(id string) error {
-
-	tilemap, err := assets.LoadTilemap(id)
+func (l *Level) LoadLevel() error {
+	tilemap, err := assets.LoadTilemap(l.Name)
+	fmt.Printf("tilemap: %+v\n", tilemap)
 	if err != nil {
 		return err
 	}
@@ -81,7 +90,6 @@ func (l *Level) LoadLevel(id string) error {
 	l.Height = tilemap.Height
 	l.Width = tilemap.Width
 	l.Grid = make([][]*Tile, l.Height)
-
 	for _, layer := range tilemap.Layers {
 		if layer.Type == "tilelayer" {
 			if layer.Name == "tiles" {
@@ -109,9 +117,6 @@ func (l *Level) LoadLevel(id string) error {
 		}
 
 	}
-
-	//fmt.Println(tilemap)
-
 	return nil
 
 }

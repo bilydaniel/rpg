@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bilydaniel/rpg/assets"
 	"bilydaniel/rpg/config"
 	"bilydaniel/rpg/entities"
 	"bilydaniel/rpg/utils"
@@ -16,18 +17,16 @@ type Game struct {
 	Camera      *config.Camera
 	World       *world.World
 	Drag        *utils.Drag
+	Assets      *assets.Assets
 }
 
 func initGame() (*Game, error) {
-	//TODO remove, gonna load assets based on the world
-	/*
-		assets, err := assets.InitAssets()
-		if err != nil {
-			return nil, err
-		}
-	*/
-
 	world, err := world.InitWorld()
+	if err != nil {
+		return nil, err
+	}
+
+	assets, err := assets.InitAssets()
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +35,7 @@ func initGame() (*Game, error) {
 		World:       world,
 		Camera:      &config.Camera{X: 0, Y: 0, Scale: 1.0}, //TODO make an init function
 		Drag:        &utils.Drag{},
+		Assets:      assets,
 	}, nil
 }
 
@@ -92,7 +92,6 @@ func (g *Game) Update() error {
 
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) && g.Drag.Dragging {
 		g.Drag.Dragging = false
-		//TODO SELECT ALL THE CHARACTERS IN SQUARE
 		for _, pchar := range g.PCharacters {
 			if pchar.RectCollision(g.Drag.Startx, g.Drag.Starty, g.Drag.Endx, g.Drag.Endy, *g.Camera) {
 				pchar.Selected = true
@@ -120,7 +119,7 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	//TODO load all the assets only once
 	if g.World != nil && g.World.CurrentLevel != nil {
-		g.World.CurrentLevel.Draw(screen, g.Camera)
+		g.World.CurrentLevel.Draw(screen, g.Camera, *g.Assets)
 	}
 
 	/*

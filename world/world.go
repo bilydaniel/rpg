@@ -11,12 +11,12 @@ func InitWorld() (*World, error) {
 		CurrentLevel: &currentLevel,
 		Levels:       map[string]*Level{},
 	}
-	level := Level{}
 
-	err := level.LoadLevel(world.CurrentLevel.Name)
+	err := currentLevel.LoadLevel()
 	if err != nil {
 		return nil, err
 	}
-	world.Levels[world.CurrentLevel.Name] = &level
+
+	world.Levels[world.CurrentLevel.Name] = &currentLevel
 	return &world, nil
 }

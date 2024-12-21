@@ -1,6 +1,10 @@
 package assets
 
 import (
+	"fmt"
+	"io/fs"
+	"path/filepath"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
@@ -15,32 +19,64 @@ type AudioAssets struct {
 }
 
 type VideoAssets struct {
-	Tilesets map[string]TilesetAsset
-	Objects  map[string]ObjectAsset
+	Images map[string]map[string]*ebiten.Image //tileset type(floors) => tileset name()TilesetFloor => image
 }
 
-type TilesetAsset struct {
-	Img *ebiten.Image
-}
-type ObjectAsset struct {
-}
-
-func InitAssets() (Assets, error) {
-	//TODO add all assets here
-	var err error
-	assets := Assets{Tileset: map[string]*ebiten.Image{}}
-	assets.Tileset["floor"], _, err = ebitenutil.NewImageFromFile("assets/images/tilesets/TilesetFloor.png")
-	if err != nil {
-		return assets, err
+func InitAssets() (*Assets, error) {
+	assets := &Assets{Video: VideoAssets{
+		Images: map[string]map[string]*ebiten.Image{},
+	},
 	}
+	err := LoadAllAssets(assets) //TODO change to partial loading if needed
 
-	assets.Tileset["objects"], _, err = ebitenutil.NewImageFromFile("assets/images/tilesets/house1.png")
 	if err != nil {
-		return assets, err
+		return nil, err
 	}
 	return assets, nil
 }
 
-func (a *Assets) LoadTileSet(name string) {
+func LoadAllAssets(assets *Assets) error {
+	if assets == nil {
+		return fmt.Errorf("assets is nil")
+	}
+
+	root := "assets/tilesets"
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == root {
+			//skip the root
+			return nil
+		}
+		if filepath.Ext(path) != ".png" {
+			//skip non-png files
+			return nil
+		}
+
+		dirname := filepath.Base(filepath.Dir(path))
+		if assets.Video.Images[dirname] == nil {
+			assets.Video.Images[dirname] = map[string]*ebiten.Image{}
+		}
+
+		assets.Video.Images[dirname][d.Name()], _, err = ebitenutil.NewImageFromFile(path)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *Assets) GetImage(setname string, filename string, tileid int) *ebiten.Image {
+	//TODO make a cashe tileid => image
+	// return cashe[tileid]
+
+	return a.Video.Images[setname][filename]
 
 }
