@@ -1,7 +1,9 @@
 package assets
 
 import (
+	"bilydaniel/rpg/config"
 	"fmt"
+	"image"
 	"io/fs"
 	"path/filepath"
 
@@ -19,13 +21,16 @@ type AudioAssets struct {
 }
 
 type VideoAssets struct {
-	Images map[string]map[string]*ebiten.Image //tileset type(floors) => tileset name()TilesetFloor => image
+	Images    map[string]map[string]*ebiten.Image //tileset type(floors) => tileset name()TilesetFloor => image
+	Tilecashe map[int]*ebiten.Image
 }
 
 func InitAssets() (*Assets, error) {
-	assets := &Assets{Video: VideoAssets{
-		Images: map[string]map[string]*ebiten.Image{},
-	},
+	assets := &Assets{
+		Video: VideoAssets{
+			Images:    map[string]map[string]*ebiten.Image{},
+			Tilecashe: map[int]*ebiten.Image{},
+		},
 	}
 	err := LoadAllAssets(assets) //TODO change to partial loading if needed
 
@@ -73,10 +78,19 @@ func LoadAllAssets(assets *Assets) error {
 	return nil
 }
 
-func (a *Assets) GetImage(setname string, filename string, tileid int) *ebiten.Image {
+func (a *Assets) GetImage(setname string, filename string, columns int, tileid int) *ebiten.Image {
 	//TODO make a cashe tileid => image
 	// return cashe[tileid]
+	tile, ok := a.Video.Tilecashe[tileid]
+	if ok {
+		return tile
+	}
 
-	return a.Video.Images[setname][filename]
+	x0 := ((tileid - 1) % columns) * 16
+	y0 := ((tileid - 1) / columns) * 16
+
+	a.Video.Tilecashe[tileid] = a.Video.Images[setname][filename].SubImage(image.Rect(x0, y0, x0+config.TileSize, y0+config.TileSize)).(*ebiten.Image)
+
+	return a.Video.Tilecashe[tileid]
 
 }

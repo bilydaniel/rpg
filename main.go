@@ -7,8 +7,10 @@ import (
 	"bilydaniel/rpg/utils"
 	"bilydaniel/rpg/world"
 	"log"
+	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
@@ -118,6 +120,13 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	//TODO load all the assets only once
+	debug := "tps"
+	if debug == "tps" {
+		ebitenutil.DebugPrint(screen, strconv.Itoa(int(ebiten.ActualTPS())))
+	}
+	if debug == "fps" {
+		ebitenutil.DebugPrint(screen, strconv.Itoa(int(ebiten.ActualFPS())))
+	}
 	if g.World != nil && g.World.CurrentLevel != nil {
 		g.World.CurrentLevel.Draw(screen, g.Camera, *g.Assets)
 	}

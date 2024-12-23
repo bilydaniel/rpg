@@ -34,9 +34,14 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 		for x := 0; x < len(l.Grid[y]); x++ {
 			tileid := l.Grid[y][x]
 			//TODO REMOVE HARDCODE
-			image := assets.GetImage("floors", "TilesetFloor.png", tileid.ID)
+			image := assets.GetImage("floors", "TilesetFloor.png", 22, tileid.ID)
 			opts := ebiten.DrawImageOptions{}
-			screen.DrawImage(image, &opts)
+			opts.GeoM.Translate(float64(x*config.TileSize), float64(y*config.TileSize))
+			opts.GeoM.Translate(-cam.X, -cam.Y)
+			opts.GeoM.Scale(cam.Scale, cam.Scale)
+			if image != nil {
+				screen.DrawImage(image, &opts)
+			}
 
 		}
 	}
@@ -96,14 +101,13 @@ func (l *Level) LoadLevel() error {
 				if len(layer.Data) < l.Width*l.Height {
 					return fmt.Errorf("Tile layer has not enough data")
 				}
-
 				//TODO TEST WITH DIFFERENT WIDTH AND HEIGHT, both 100 now
 				for i := 0; i < l.Height; i++ {
 					//Y
 					l.Grid[i] = make([]*Tile, l.Width)
 					for j := 0; j < l.Width; j++ {
 						//X
-						l.Grid[i][j] = &Tile{ID: layer.Data[(i+1)*j], Point: utils.Point{X: float64(j), Y: float64(i)}}
+						l.Grid[i][j] = &Tile{ID: layer.Data[(i*l.Width)+j], Point: utils.Point{X: float64(j), Y: float64(i)}}
 					}
 				}
 			}
