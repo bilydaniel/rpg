@@ -3,6 +3,7 @@ package config
 type Camera struct {
 	X, Y  float64
 	Scale float64
+	Speed float64
 }
 
 func (c *Camera) ToWorld(x, y float64) (worldx float64, worldy float64) {

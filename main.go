@@ -35,7 +35,7 @@ func initGame() (*Game, error) {
 	return &Game{
 		PCharacters: entities.InitPCharacters(),
 		World:       world,
-		Camera:      &config.Camera{X: 0, Y: 0, Scale: 1.0}, //TODO make an init function
+		Camera:      &config.Camera{X: 0, Y: 0, Scale: 1.0, Speed: 2.0}, //TODO make an init function
 		Drag:        &utils.Drag{},
 		Assets:      assets,
 	}, nil
@@ -120,7 +120,7 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	//TODO load all the assets only once
-	debug := "tps"
+	debug := ""
 	if debug == "tps" {
 		ebitenutil.DebugPrint(screen, strconv.Itoa(int(ebiten.ActualTPS())))
 	}

@@ -74,23 +74,22 @@ func LoadAllAssets(assets *Assets) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func (a *Assets) GetImage(setname string, filename string, columns int, tileid int) *ebiten.Image {
+	return a.Video.Images[setname][filename]
+}
+func (a *Assets) GetTileImage(setname string, filename string, columns int, tileid int) *ebiten.Image {
 	//TODO make a cashe tileid => image
 	// return cashe[tileid]
 	tile, ok := a.Video.Tilecashe[tileid]
 	if ok {
 		return tile
 	}
-
 	x0 := ((tileid - 1) % columns) * 16
 	y0 := ((tileid - 1) / columns) * 16
 
 	a.Video.Tilecashe[tileid] = a.Video.Images[setname][filename].SubImage(image.Rect(x0, y0, x0+config.TileSize, y0+config.TileSize)).(*ebiten.Image)
-
 	return a.Video.Tilecashe[tileid]
-
 }

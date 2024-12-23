@@ -19,10 +19,11 @@ type Tileset struct {
 	Source   string `json:"source"`
 }
 type TilesetData struct {
-	Image   string     `json:"image"`
-	Columns int        `json:"columns"`
-	Name    string     `json:"name"`
-	Tiles   []TileData `json:"tiles"`
+	TilesImage bool
+	Image      string     `json:"image"`
+	Columns    int        `json:"columns"`
+	Name       string     `json:"name"`
+	Tiles      []TileData `json:"tiles"`
 }
 type TileData struct {
 	ID          int    `json:"id"`
@@ -73,6 +74,7 @@ type Object struct {
 	Height   int     `json:"Height"`
 	Rotation float64 `json:"rotation"`
 	Visible  bool    `json:"visible"`
+	Name     string
 }
 
 /*

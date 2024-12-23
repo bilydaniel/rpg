@@ -16,17 +16,19 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Level struct {
-	Name   string
-	Grid   [][]*Tile
-	Width  int //Number of tiles
-	Height int //Number of tiles
+	Name       string
+	Grid       [][]*Tile
+	Width      int //Number of tiles
+	Height     int //Number of tiles
+	SourceData map[string]*assets.TilesetData
+	Obstacles  map[string][]assets.Object
 }
 
 func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Assets) {
@@ -34,23 +36,39 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 		for x := 0; x < len(l.Grid[y]); x++ {
 			tileid := l.Grid[y][x]
 			//TODO REMOVE HARDCODE
-			image := assets.GetImage("floors", "TilesetFloor.png", 22, tileid.ID)
-			opts := ebiten.DrawImageOptions{}
-			opts.GeoM.Translate(float64(x*config.TileSize), float64(y*config.TileSize))
-			opts.GeoM.Translate(-cam.X, -cam.Y)
-			opts.GeoM.Scale(cam.Scale, cam.Scale)
+			image := assets.GetTileImage(l.SourceData["floors"].Name, l.SourceData["floors"].Image, l.SourceData["floors"].Columns, tileid.ID)
 			if image != nil {
+				opts := ebiten.DrawImageOptions{}
+				opts.GeoM.Translate(float64(x*config.TileSize), float64(y*config.TileSize))
+				opts.GeoM.Translate(-cam.X*cam.Speed, -cam.Y*cam.Speed)
+				opts.GeoM.Scale(cam.Scale, cam.Scale)
 				screen.DrawImage(image, &opts)
 			}
-
 		}
 	}
 
+	for _, v := range l.Obstacles["buildings"] {
+		image := assets.GetImage(l.SourceData["buildings"].Name, l.SourceData["buildings"].Image, l.SourceData["floors"].Columns, v.ID)
+		if image != nil {
+			opts := ebiten.DrawImageOptions{}
+			/*
+				opts.GeoM.Translate(float64(x*config.TileSize), float64(y*config.TileSize))
+				opts.GeoM.Translate(-cam.X*cam.Speed, -cam.Y*cam.Speed)
+				opts.GeoM.Scale(cam.Scale, cam.Scale)
+			*/
+			screen.DrawImage(image, &opts)
+		}
+	}
 }
 
 func (l *Level) LoadLevel() error {
+	if l.SourceData == nil {
+		l.SourceData = map[string]*assets.TilesetData{}
+	}
+	if l.Obstacles == nil {
+		l.Obstacles = map[string][]assets.Object{}
+	}
 	tilemap, err := assets.LoadTilemap(l.Name)
-	fmt.Printf("tilemap: %+v\n", tilemap)
 	if err != nil {
 		return err
 	}
@@ -73,23 +91,22 @@ func (l *Level) LoadLevel() error {
 
 		if sourceData.Image != "" {
 			//Source is tileset
-			//tilesetAsset := assets.TilesetAsset{}
-			pathsplit := strings.Split(sourceData.Image, "/")
-			splitlen := len(pathsplit)
-			if splitlen != 0 {
-
-			}
-
-			assetPath := "assets/tilesets/" + sourceData.Name + sourceData.Image
-			fmt.Println(assetPath)
-			//tilesetAsset.Img = ebitenutil.NewImageFromFile("")
-			//l.Assets.Video.Tilesets[sourceData.Name] = tilesetAsset
-
+			sourceData.TilesImage = true
+			sourceData.Image = filepath.Base(sourceData.Image)
 		} else if len(sourceData.Tiles) != 0 {
 			//Source is objects
-
+			sourceData.TilesImage = false
+			for k, v := range sourceData.Tiles {
+				sourceData.Tiles[k].Image = filepath.Base(v.Image)
+			}
 		}
 
+		l.SourceData[sourceData.Name] = &sourceData
+		/*
+			for _, y := range l.SourceData {
+				//fmt.Printf("%+v\n", y)
+			}
+		*/
 	}
 
 	l.Height = tilemap.Height
@@ -115,14 +132,16 @@ func (l *Level) LoadLevel() error {
 
 		if layer.Type == "objectgroup" {
 			if layer.Name == "buildings" {
+				for _, v := range layer.Objects {
+					fmt.Printf("builds: %+v\n", l.SourceData["buildings"].Tiles)
+					//TODO FINISH MAPPING source ID TO NAME
+					l.Obstacles[layer.Name] = append(l.Obstacles[layer.Name], v)
+				}
 
 			}
-
 		}
-
 	}
 	return nil
-
 }
 
 type Tile struct {
