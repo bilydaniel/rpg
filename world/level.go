@@ -25,8 +25,9 @@ import (
 type Level struct {
 	Name       string
 	Grid       [][]*Tile
-	Width      int //Number of tiles
-	Height     int //Number of tiles
+	Width      int            //Number of tiles
+	Height     int            //Number of tiles
+	Sources    map[string]int //source => firstgid
 	SourceData map[string]*assets.TilesetData
 	Obstacles  map[string][]assets.Object
 }
@@ -48,35 +49,52 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 	}
 
 	for _, v := range l.Obstacles["buildings"] {
-		image := assets.GetImage(l.SourceData["buildings"].Name, l.SourceData["buildings"].Image, l.SourceData["floors"].Columns, v.ID)
+		gid := v.GID
+		firstgid := l.Sources["buildings.tsj"] //TODO REMOVE HARDCODE
+		id := gid - firstgid
+
+		resultimage := ""
+
+		//TODO change from O(n) to O(1)
+		for _, data := range l.SourceData["buildings"].Tiles {
+			if data.ID == id {
+				resultimage = data.Image
+			}
+		}
+
+		image := assets.GetImage(l.SourceData["buildings"].Name, resultimage)
 		if image != nil {
 			opts := ebiten.DrawImageOptions{}
-			/*
-				opts.GeoM.Translate(float64(x*config.TileSize), float64(y*config.TileSize))
-				opts.GeoM.Translate(-cam.X*cam.Speed, -cam.Y*cam.Speed)
-				opts.GeoM.Scale(cam.Scale, cam.Scale)
-			*/
+			opts.GeoM.Translate(float64(v.X), float64(v.Y))
+			opts.GeoM.Translate(-cam.X*cam.Speed, -cam.Y*cam.Speed)
+			opts.GeoM.Scale(cam.Scale, cam.Scale)
 			screen.DrawImage(image, &opts)
 		}
 	}
 }
 
 func (l *Level) LoadLevel() error {
+	if l.Sources == nil {
+		l.Sources = map[string]int{}
+	}
 	if l.SourceData == nil {
 		l.SourceData = map[string]*assets.TilesetData{}
 	}
 	if l.Obstacles == nil {
 		l.Obstacles = map[string][]assets.Object{}
 	}
+
 	tilemap, err := assets.LoadTilemap(l.Name)
 	if err != nil {
 		return err
 	}
 
-	//TODO transofrm the tilemap data into my own
-	//TODO add things to transform when needed
-	//TODO minimal for now
 	for _, source := range tilemap.Tilesets {
+		_, ok := l.Sources[source.Source]
+		if !ok {
+			l.Sources[source.Source] = source.Firstgid
+		}
+		l.Sources[source.Source] = source.Firstgid
 		path := "assets/maps/" + source.Source
 		sourceFile, err := os.ReadFile(path)
 		if err != nil {
@@ -102,15 +120,10 @@ func (l *Level) LoadLevel() error {
 		}
 
 		l.SourceData[sourceData.Name] = &sourceData
-		/*
-			for _, y := range l.SourceData {
-				//fmt.Printf("%+v\n", y)
-			}
-		*/
 	}
-
 	l.Height = tilemap.Height
 	l.Width = tilemap.Width
+
 	l.Grid = make([][]*Tile, l.Height)
 	for _, layer := range tilemap.Layers {
 		if layer.Type == "tilelayer" {
@@ -124,7 +137,7 @@ func (l *Level) LoadLevel() error {
 					l.Grid[i] = make([]*Tile, l.Width)
 					for j := 0; j < l.Width; j++ {
 						//X
-						l.Grid[i][j] = &Tile{ID: layer.Data[(i*l.Width)+j], Point: utils.Point{X: float64(j), Y: float64(i)}}
+						l.Grid[i][j] = &Tile{ID: layer.Data[(i*l.Width)+j], Node: utils.Node{X: j, Y: i}}
 					}
 				}
 			}
@@ -133,11 +146,8 @@ func (l *Level) LoadLevel() error {
 		if layer.Type == "objectgroup" {
 			if layer.Name == "buildings" {
 				for _, v := range layer.Objects {
-					fmt.Printf("builds: %+v\n", l.SourceData["buildings"].Tiles)
-					//TODO FINISH MAPPING source ID TO NAME
 					l.Obstacles[layer.Name] = append(l.Obstacles[layer.Name], v)
 				}
-
 			}
 		}
 	}
@@ -146,7 +156,7 @@ func (l *Level) LoadLevel() error {
 
 type Tile struct {
 	ID int
-	utils.Point
+	utils.Node
 	G, H, F  float64
 	Parent   *Tile
 	Walkable bool //TODO change to something more complex, gonna need to check for building, enemies, etc.
@@ -157,24 +167,24 @@ type PathFinder struct {
 	CollisionShapes []utils.CollisionShape
 }
 
-func (pf *PathFinder) Distance(start utils.Point, end utils.Point) float64 {
+func (pf *PathFinder) Distance(start utils.Node, end utils.Node) float64 {
 	dx := start.X - end.X
 	dy := start.Y - end.Y
 
-	return math.Hypot(dx, dy)
+	return math.Hypot(float64(dx), float64(dy))
 }
 
-func (pf *PathFinder) ReconstructPath(node *Tile) []utils.Point {
+func (pf *PathFinder) ReconstructPath(node *Tile) []utils.Node {
 	currentNode := node
-	path := []utils.Point{}
+	path := []utils.Node{}
 
 	for currentNode != nil {
-		path = append(path, currentNode.Point)
+		path = append(path, currentNode.Node)
 		currentNode = currentNode.Parent
 	}
 	return path
 }
-func (level *Level) GetNeighbors(point utils.Point) []*Tile {
+func (level *Level) GetNeighbors(node utils.Node) []*Tile {
 	neighbors := []*Tile{}
 
 	offsets := [][]int{
@@ -184,8 +194,8 @@ func (level *Level) GetNeighbors(point utils.Point) []*Tile {
 	}
 
 	for _, offset := range offsets {
-		offsetx := int(point.X) + offset[0]
-		offsety := int(point.Y) + offset[1]
+		offsetx := node.X + offset[0]
+		offsety := node.Y + offset[1]
 
 		if offsetx >= 0 && offsety >= 0 && offsetx < level.Width && offsety < level.Height {
 			neighbors = append(neighbors, level.Grid[offsety][offsetx])
@@ -194,9 +204,9 @@ func (level *Level) GetNeighbors(point utils.Point) []*Tile {
 	return neighbors
 }
 
-func (pf *PathFinder) AlfaStar(level Level, start utils.Point, end utils.Point) []utils.Point {
-	startNode := level.Grid[int(start.Y)][int(start.X)]
-	endNode := level.Grid[int(end.Y)][int(end.X)]
+func (pf *PathFinder) AlfaStar(level Level, start utils.Node, end utils.Node) []utils.Node {
+	startNode := level.Grid[start.Y][start.X]
+	endNode := level.Grid[end.Y][end.X]
 
 	openSet := []*Tile{}
 	closedSet := map[*Tile]bool{}
@@ -220,14 +230,14 @@ func (pf *PathFinder) AlfaStar(level Level, start utils.Point, end utils.Point) 
 		openSet = openSet[1:]
 		closedSet[current] = true
 
-		neighbors := level.GetNeighbors(current.Point)
+		neighbors := level.GetNeighbors(current.Node)
 		for _, neighbor := range neighbors {
 			//TODO probably gonna need something more complex than walkable??
 			if closedSet[neighbor] || !neighbor.Walkable {
 				continue
 			}
 
-			tentativeG := current.G + pf.Distance(current.Point, neighbor.Point)
+			tentativeG := current.G + pf.Distance(current.Node, neighbor.Node)
 			// POSSIBLE UPGRADE FROM A* TO THETA*, DOESENT SEEM NEEDED
 			/*
 				if current.Parent != nil && pf.LineOfSight(current.Parent.Pos, neighbor.Pos) {
@@ -244,7 +254,7 @@ func (pf *PathFinder) AlfaStar(level Level, start utils.Point, end utils.Point) 
 			if !sliceContains || tentativeG < neighbor.G {
 				neighbor.Parent = current
 				neighbor.G = tentativeG
-				neighbor.H = pf.Distance(neighbor.Point, endNode.Point)
+				neighbor.H = pf.Distance(neighbor.Node, endNode.Node)
 				neighbor.F = neighbor.G + neighbor.H
 
 				if !sliceContains {

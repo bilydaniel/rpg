@@ -83,7 +83,7 @@ func (g *Game) Update() error {
 
 	// DRAGING
 	// TODO combine with selecting
-	if inpututil.MouseButtonPressDuration(ebiten.MouseButtonLeft) > 5 && !g.Drag.Dragging {
+	if inpututil.MouseButtonPressDuration(ebiten.MouseButtonLeft) > 3 && !g.Drag.Dragging {
 		g.Drag.Dragging = true
 		g.Drag.Startx, g.Drag.Starty = ebiten.CursorPosition()
 	}
@@ -105,7 +105,10 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
 		for _, pchar := range g.PCharacters {
 			mx, my := ebiten.CursorPosition()
-			pchar.SetDestination(mx, my, *g.Camera)
+			//g.CurrentLevel.GetNodeFromMouse(mx, my, *g.Camera)
+			if pchar.Selected {
+				pchar.SetDestination(mx, my, *g.Camera)
+			}
 		}
 	}
 
@@ -131,15 +134,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.World.CurrentLevel.Draw(screen, g.Camera, *g.Assets)
 	}
 
-	/*
-		for _, character := range g.PCharacters {
-			if character != nil {
-				character.Draw(screen, g.Camera)
-			}
+	for _, character := range g.PCharacters {
+		if character != nil {
+			character.Draw(screen, *g.Camera)
 		}
+	}
 
-		g.Drag.Draw(screen, &g.Camera)
-	*/
+	g.Drag.Draw(screen, g.Camera)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

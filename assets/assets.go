@@ -32,7 +32,7 @@ func InitAssets() (*Assets, error) {
 			Tilecashe: map[int]*ebiten.Image{},
 		},
 	}
-	err := LoadAllAssets(assets) //TODO change to partial loading if needed
+	err := LoadAllAssets(assets)
 
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func LoadAllAssets(assets *Assets) error {
 	return nil
 }
 
-func (a *Assets) GetImage(setname string, filename string, columns int, tileid int) *ebiten.Image {
+func (a *Assets) GetImage(setname string, filename string) *ebiten.Image {
 	return a.Video.Images[setname][filename]
 }
 func (a *Assets) GetTileImage(setname string, filename string, columns int, tileid int) *ebiten.Image {

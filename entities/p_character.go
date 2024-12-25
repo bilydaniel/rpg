@@ -2,6 +2,7 @@ package entities
 
 import (
 	"bilydaniel/rpg/config"
+	"bilydaniel/rpg/utils"
 	"fmt"
 	"math"
 
@@ -12,6 +13,7 @@ import (
 type PCharacter struct {
 	Name            string
 	Selected        bool
+	Destination     utils.Point
 	DestinationX    *float64
 	DestinationY    *float64
 	DestinationDist *float64
@@ -67,13 +69,15 @@ func (p *PCharacter) Update() {
 		dist := math.Hypot(dx, dy)
 		p.DestinationDist = &dist
 
-		if p.Angle < p.AngleDestination-p.AngleTolerance {
-			p.Angle += p.TurnSpeed
-		}
+		/*
+			if p.Angle < p.AngleDestination-p.AngleTolerance {
+				p.Angle += p.TurnSpeed
+			}
 
-		if p.Angle > p.AngleDestination+p.AngleTolerance {
-			p.Angle -= p.TurnSpeed
-		}
+			if p.Angle > p.AngleDestination+p.AngleTolerance {
+				p.Angle -= p.TurnSpeed
+			}
+		*/
 
 		if dist > config.Tolerance {
 			dxnorm := dx / dist
@@ -95,7 +99,7 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 	}
 	if p.Name == "red" {
 		//pcolor = color.RGBA{255, 0, 0, 125}
-		tile, _, err = ebitenutil.NewImageFromFile("assets/images/redchar.png")
+		tile, _, err = ebitenutil.NewImageFromFile("assets/images/cavegirl.png")
 	}
 	if p.Name == "green" {
 		//pcolor = color.RGBA{0, 255, 0, 125}
@@ -121,9 +125,10 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 	// TODO SWITCH ASSET IF IN A CERTAIN ANGLE, good for now
 
 	opts.GeoM.Translate(float64(p.GetX()), float64(p.GetY()))
-	opts.GeoM.Translate(-camera.X, -camera.Y)
+	opts.GeoM.Translate(-camera.X*camera.Speed, -camera.Y*camera.Speed)
 	opts.GeoM.Scale(camera.Scale, camera.Scale)
 
+	//TODO use shaders for this????
 	if p.Selected {
 		screen.DrawImage(circle, &opts)
 
@@ -211,14 +216,12 @@ func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, c
 }
 
 func (p *PCharacter) SetDestination(x int, y int, camera config.Camera) {
-	if p.Selected {
-		worldx, worldy := camera.ToWorld(float64(x), float64(y))
+	worldx, worldy := camera.ToWorld(float64(x), float64(y))
 
-		p.DestinationX = &worldx
-		p.DestinationY = &worldy
+	p.DestinationX = &worldx
+	p.DestinationY = &worldy
 
-		dx := *p.DestinationX - p.GetX()
-		dy := *p.DestinationY - p.GetY()
-		p.AngleDestination = math.Atan2(-dy, dx)
-	}
+	dx := *p.DestinationX - p.GetX()
+	dy := *p.DestinationY - p.GetY()
+	p.AngleDestination = math.Atan2(-dy, dx)
 }

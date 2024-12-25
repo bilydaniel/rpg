@@ -1,12 +1,14 @@
 package utils
 
 type Point struct {
-	X, Y float64 // tiles, maybe change to int??
+	X, Y float64
+}
+
+type Node struct {
+	X, Y int
 }
 
 // TODO disconected from the rest, kinda reimplementation,
-// put it together with sprite
-// need to do this part alone first
 type CollisionShape interface {
 	Intersects(Point) bool
 	IntersectsLine(Point, Point) bool
