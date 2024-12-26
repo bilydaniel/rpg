@@ -102,9 +102,12 @@ func (g *Game) Update() error {
 
 	}
 	// MOVEMENT
+	//TODO MOVE THIS SOMEWHERE ELSE
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
 		for _, pchar := range g.PCharacters {
 			mx, my := ebiten.CursorPosition()
+			worldx, worldy := g.Camera.ScreenToWorld(float64(mx), float64(my))
+			g.World.CurrentLevel.NodeFromPoint(utils.Point{X: worldx, Y: worldy})
 			//g.CurrentLevel.GetNodeFromMouse(mx, my, *g.Camera)
 			if pchar.Selected {
 				pchar.SetDestination(mx, my, *g.Camera)

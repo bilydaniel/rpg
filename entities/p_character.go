@@ -92,11 +92,7 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 
 	//pcolor := color.RGBA{0, 255, 0, 255}
 	tile := &ebiten.Image{}
-	circle, _, err := ebitenutil.NewImageFromFile("assets/images/circle.png")
-	//TODO ERROR HANDLE
-	if err != nil {
-		return
-	}
+	var err error
 	if p.Name == "red" {
 		//pcolor = color.RGBA{255, 0, 0, 125}
 		tile, _, err = ebitenutil.NewImageFromFile("assets/images/cavegirl.png")
@@ -119,37 +115,29 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 	}
 
 	opts := ebiten.DrawImageOptions{}
-	opts.GeoM.Translate(-8, -8)
-	opts.GeoM.Rotate(p.Angle)
-	opts.GeoM.Translate(8, 8)
-	// TODO SWITCH ASSET IF IN A CERTAIN ANGLE, good for now
 
-	opts.GeoM.Translate(float64(p.GetX()), float64(p.GetY()))
-	opts.GeoM.Translate(-camera.X*camera.Speed, -camera.Y*camera.Speed)
-	opts.GeoM.Scale(camera.Scale, camera.Scale)
-
+	camera.WorldToScreenGeom(&opts, int(p.GetX()), int(p.GetY()))
+	circle, _, err := ebitenutil.NewImageFromFile("assets/images/circle.png")
+	if err != nil {
+		return
+	}
 	//TODO use shaders for this????
 	if p.Selected {
 		screen.DrawImage(circle, &opts)
-
 	}
-
 	screen.DrawImage(tile, &opts)
+
 	if p.DestinationX != nil && p.DestinationY != nil {
 		if p.DestinationDist != nil && *p.DestinationDist > float64(config.Tolerance) {
 			destinationImage, _, err := ebitenutil.NewImageFromFile("assets/images/target.png")
 			if err == nil {
 				opts.GeoM.Reset()
-				//TODO make a function from this
-				opts.GeoM.Translate(*p.DestinationX, *p.DestinationY)
-				opts.GeoM.Translate(-camera.X-config.TileSize/2, -camera.Y-config.TileSize/2)
-				opts.GeoM.Scale(camera.Scale, camera.Scale)
+				camera.WorldToScreenGeom(&opts, int(*p.DestinationX)-config.TileSize/2, int(*p.DestinationY)-config.TileSize/2)
 				screen.DrawImage(destinationImage, &opts)
 			}
 		}
 
 	}
-	//vector.StrokeCircle(screen, float32(p.X-camera.X+8), float32(p.Y-camera.Y+8), float32(*p.R), 1.0, color.RGBA{255, 0, 0, 125}, true)
 }
 
 func (p *PCharacter) OnClick() {
@@ -164,8 +152,8 @@ func (p *PCharacter) ClickCollision(x int, y int, camera config.Camera) bool {
 
 	switch value := p.Sprite.(type) {
 	case *CircleSprite:
-		worldx := (float64(x) / camera.Scale) + camera.X
-		worldy := (float64(y) / camera.Scale) + camera.Y
+
+		worldx, worldy := camera.ScreenToWorld(float64(x), float64(y))
 		dx := worldx - p.GetX() - config.TileSize/2
 		dy := worldy - p.GetY() - config.TileSize/2
 
@@ -216,7 +204,7 @@ func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, c
 }
 
 func (p *PCharacter) SetDestination(x int, y int, camera config.Camera) {
-	worldx, worldy := camera.ToWorld(float64(x), float64(y))
+	worldx, worldy := camera.ScreenToWorld(float64(x), float64(y))
 
 	p.DestinationX = &worldx
 	p.DestinationY = &worldy

@@ -33,16 +33,15 @@ type Level struct {
 }
 
 func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Assets) {
+	opts := ebiten.DrawImageOptions{}
 	for y := 0; y < len(l.Grid); y++ {
 		for x := 0; x < len(l.Grid[y]); x++ {
 			tileid := l.Grid[y][x]
 			//TODO REMOVE HARDCODE
 			image := assets.GetTileImage(l.SourceData["floors"].Name, l.SourceData["floors"].Image, l.SourceData["floors"].Columns, tileid.ID)
 			if image != nil {
-				opts := ebiten.DrawImageOptions{}
-				opts.GeoM.Translate(float64(x*config.TileSize), float64(y*config.TileSize))
-				opts.GeoM.Translate(-cam.X*cam.Speed, -cam.Y*cam.Speed)
-				opts.GeoM.Scale(cam.Scale, cam.Scale)
+				opts.GeoM.Reset()
+				cam.WorldToScreenGeom(&opts, x*config.TileSize, y*config.TileSize)
 				screen.DrawImage(image, &opts)
 			}
 		}
@@ -64,13 +63,16 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 
 		image := assets.GetImage(l.SourceData["buildings"].Name, resultimage)
 		if image != nil {
-			opts := ebiten.DrawImageOptions{}
-			opts.GeoM.Translate(float64(v.X), float64(v.Y))
-			opts.GeoM.Translate(-cam.X*cam.Speed, -cam.Y*cam.Speed)
-			opts.GeoM.Scale(cam.Scale, cam.Scale)
+			opts.GeoM.Reset()
+			cam.WorldToScreenGeom(&opts, v.X, v.Y)
 			screen.DrawImage(image, &opts)
 		}
 	}
+}
+
+func (l *Level) NodeFromPoint(point utils.Point) *utils.Node {
+
+	return nil
 }
 
 func (l *Level) LoadLevel() error {
