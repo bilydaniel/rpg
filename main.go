@@ -6,6 +6,7 @@ import (
 	"bilydaniel/rpg/entities"
 	"bilydaniel/rpg/utils"
 	"bilydaniel/rpg/world"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -20,10 +21,11 @@ type Game struct {
 	World       *world.World
 	Drag        *utils.Drag
 	Assets      *assets.Assets
+	PathFinder  *world.PathFinder
 }
 
 func initGame() (*Game, error) {
-	world, err := world.InitWorld()
+	worldInstance, err := world.InitWorld()
 	if err != nil {
 		return nil, err
 	}
@@ -34,10 +36,11 @@ func initGame() (*Game, error) {
 	}
 	return &Game{
 		PCharacters: entities.InitPCharacters(),
-		World:       world,
+		World:       worldInstance,
 		Camera:      &config.Camera{X: 0, Y: 0, Scale: 1.0, Speed: 2.0}, //TODO make an init function
 		Drag:        &utils.Drag{},
 		Assets:      assets,
+		PathFinder:  &world.PathFinder{},
 	}, nil
 }
 
@@ -105,12 +108,33 @@ func (g *Game) Update() error {
 	//TODO MOVE THIS SOMEWHERE ELSE
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
 		for _, pchar := range g.PCharacters {
-			mx, my := ebiten.CursorPosition()
-			worldx, worldy := g.Camera.ScreenToWorld(float64(mx), float64(my))
-			g.World.CurrentLevel.NodeFromPoint(utils.Point{X: worldx, Y: worldy})
-			//g.CurrentLevel.GetNodeFromMouse(mx, my, *g.Camera)
 			if pchar.Selected {
-				pchar.SetDestination(mx, my, *g.Camera)
+
+				mx, my := ebiten.CursorPosition()
+				/*
+					pchar.SetDestination(mx, my, *g.Camera)
+				*/
+
+				startNode := g.World.CurrentLevel.NodeFromPoint(utils.Point{X: pchar.GetX(), Y: pchar.GetY()})
+
+				worldx, worldy := g.Camera.ScreenToWorld(float64(mx), float64(my))
+				destNode := g.World.CurrentLevel.NodeFromPoint(utils.Point{X: worldx, Y: worldy})
+
+				//TODO add SmoothPath, test it out
+				reversedpath := g.PathFinder.AlfaStar(*g.World.CurrentLevel, *startNode, *destNode)
+
+				path := []utils.Node{}
+				if len(reversedpath) > 0 {
+					// starts at 1, dont need the 0th element (my own location)
+					for i := len(reversedpath) - 2; i >= 0; i-- {
+						path = append(path, reversedpath[i])
+					}
+				}
+
+				pchar.Path = path
+				pchar.PathProgress = 0
+				fmt.Printf("PATH: %+v\n", path)
+				fmt.Printf("PATH: %+v\n", path[0])
 			}
 		}
 	}
@@ -126,7 +150,7 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	//TODO load all the assets only once
-	debug := ""
+	debug := "tps"
 	if debug == "tps" {
 		ebitenutil.DebugPrint(screen, strconv.Itoa(int(ebiten.ActualTPS())))
 	}

@@ -71,8 +71,17 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 }
 
 func (l *Level) NodeFromPoint(point utils.Point) *utils.Node {
+	x := int(point.X / config.TileSize)
+	y := int(point.Y / config.TileSize)
 
-	return nil
+	y = int(math.Max(float64(y), 0))
+	y = int(math.Min(float64(y), float64(l.Height)))
+
+	x = int(math.Max(float64(x), 0))
+	x = int(math.Min(float64(x), float64(l.Width)))
+
+	tile := l.Grid[y][x]
+	return &tile.Node
 }
 
 func (l *Level) LoadLevel() error {
@@ -139,7 +148,7 @@ func (l *Level) LoadLevel() error {
 					l.Grid[i] = make([]*Tile, l.Width)
 					for j := 0; j < l.Width; j++ {
 						//X
-						l.Grid[i][j] = &Tile{ID: layer.Data[(i*l.Width)+j], Node: utils.Node{X: j, Y: i}}
+						l.Grid[i][j] = &Tile{ID: layer.Data[(i*l.Width)+j], Node: utils.Node{X: j, Y: i}, Walkable: true}
 					}
 				}
 			}
@@ -209,6 +218,9 @@ func (level *Level) GetNeighbors(node utils.Node) []*Tile {
 func (pf *PathFinder) AlfaStar(level Level, start utils.Node, end utils.Node) []utils.Node {
 	startNode := level.Grid[start.Y][start.X]
 	endNode := level.Grid[end.Y][end.X]
+
+	fmt.Printf("START: %+v\n", startNode)
+	fmt.Printf("END: %+v\n", endNode)
 
 	openSet := []*Tile{}
 	closedSet := map[*Tile]bool{}

@@ -1,11 +1,11 @@
 package config
 
 const (
-	ScreenW = 640
-	ScreenH = 360
+	ScreenW = 400 //TODO figure out better resolution
+	ScreenH = 240
 
-	WindowW = 1024
-	WindowH = 720
+	WindowW = 1280
+	WindowH = 960
 
 	GameName = "RPG"
 

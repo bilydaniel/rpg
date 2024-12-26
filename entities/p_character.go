@@ -13,10 +13,12 @@ import (
 type PCharacter struct {
 	Name            string
 	Selected        bool
-	Destination     utils.Point
+	Destination     *utils.Node
 	DestinationX    *float64
 	DestinationY    *float64
 	DestinationDist *float64
+	Path            []utils.Node
+	PathProgress    int
 	Sprite
 	Character
 }
@@ -38,6 +40,7 @@ func InitPCharacter(name string) *PCharacter {
 			TurnSpeed:      0.1,
 			AngleTolerance: 0.0,
 		},
+		Path: []utils.Node{},
 	}
 	if name == "red" {
 		pcharacter.SetPosition(0, 0)
@@ -61,6 +64,37 @@ func InitPCharacters() []*PCharacter {
 }
 
 func (p *PCharacter) Update() {
+	if len(p.Path) > 0 {
+		if p.PathProgress > len(p.Path)-1 {
+			p.Path = []utils.Node{}
+			p.PathProgress = 0
+			return
+		}
+
+		target := p.Path[p.PathProgress]
+		dx := float64(target.X) - p.GetX()
+		dy := float64(target.Y) - p.GetY()
+		dist := math.Hypot(dx, dy)
+
+		if dist == 0 {
+			return
+		}
+
+		dxnorm := dx / dist
+		dynorm := dy / dist
+
+		p.SetPosition(p.GetX()+dxnorm*p.Speed, p.GetY()+dynorm*p.Speed)
+
+		//is it correct? what about diagonal
+		//TODO not sure if this is great
+		if math.Abs(p.GetX()-float64(target.X)) <= p.Speed && math.Abs(p.GetY()-float64(target.Y)) <= p.Speed {
+			p.SetX(float64(target.X))
+			p.SetY(float64(target.Y))
+			p.PathProgress++
+		}
+
+	}
+
 	//TODO do FLOCKING behaviour
 	if p.DestinationX != nil && p.DestinationY != nil {
 		dx := *p.DestinationX - p.GetX()
