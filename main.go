@@ -115,12 +115,14 @@ func (g *Game) Update() error {
 					pchar.SetDestination(mx, my, *g.Camera)
 				*/
 
-				startNode := g.World.CurrentLevel.NodeFromPoint(utils.Point{X: pchar.GetX(), Y: pchar.GetY()})
+				//startNode := g.World.CurrentLevel.NodeFromPoint(utils.Point{X: pchar.GetX(), Y: pchar.GetY()})
+				startNode := &utils.Node{X: int(pchar.GetX()), Y: int(pchar.GetY())}
 
 				worldx, worldy := g.Camera.ScreenToWorld(float64(mx), float64(my))
 				destNode := g.World.CurrentLevel.NodeFromPoint(utils.Point{X: worldx, Y: worldy})
 
 				//TODO add SmoothPath, test it out
+				g.World.CurrentLevel.ResetValues()
 				reversedpath := g.PathFinder.AlfaStar(*g.World.CurrentLevel, *startNode, *destNode)
 
 				path := []utils.Node{}
@@ -134,7 +136,6 @@ func (g *Game) Update() error {
 				pchar.Path = path
 				pchar.PathProgress = 0
 				fmt.Printf("PATH: %+v\n", path)
-				fmt.Printf("PATH: %+v\n", path[0])
 			}
 		}
 	}

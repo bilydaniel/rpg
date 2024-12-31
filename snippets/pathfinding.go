@@ -258,7 +258,7 @@ func (m *Movement) UpdateMovement() bool {
 		return true
 	}
 
-	// Move towards next point
+	// Move :towards next point
 	m.CurrentPos.X += (dx / length) * m.Speed
 	m.CurrentPos.Y += (dy / length) * m.Speed
 

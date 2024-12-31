@@ -84,6 +84,17 @@ func (l *Level) NodeFromPoint(point utils.Point) *utils.Node {
 	return &tile.Node
 }
 
+func (l *Level) ResetValues() {
+	for i := 0; i < l.Height; i++ {
+		for j := 0; j < l.Width; j++ {
+			l.Grid[i][j].F = 0
+			l.Grid[i][j].G = 0
+			l.Grid[i][j].H = 0
+			l.Grid[i][j].Parent = nil
+		}
+	}
+}
+
 func (l *Level) LoadLevel() error {
 	if l.Sources == nil {
 		l.Sources = map[string]int{}
@@ -218,9 +229,6 @@ func (level *Level) GetNeighbors(node utils.Node) []*Tile {
 func (pf *PathFinder) AlfaStar(level Level, start utils.Node, end utils.Node) []utils.Node {
 	startNode := level.Grid[start.Y][start.X]
 	endNode := level.Grid[end.Y][end.X]
-
-	fmt.Printf("START: %+v\n", startNode)
-	fmt.Printf("END: %+v\n", endNode)
 
 	openSet := []*Tile{}
 	closedSet := map[*Tile]bool{}

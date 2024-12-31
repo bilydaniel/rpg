@@ -4,10 +4,12 @@ import (
 	"bilydaniel/rpg/config"
 	"bilydaniel/rpg/utils"
 	"fmt"
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type PCharacter struct {
@@ -30,13 +32,13 @@ func InitPCharacter(name string) *PCharacter {
 		Name:     name,
 		Selected: false,
 		Sprite: &CircleSprite{
-			X:   50,
-			Y:   50,
+			X:   0,
+			Y:   0,
 			R:   r,
 			R_2: r_2,
 		},
 		Character: Character{
-			Speed:          1.0,
+			Speed:          1 / 30.0,
 			TurnSpeed:      0.1,
 			AngleTolerance: 0.0,
 		},
@@ -45,11 +47,11 @@ func InitPCharacter(name string) *PCharacter {
 	if name == "red" {
 		pcharacter.SetPosition(0, 0)
 	} else if name == "green" {
-		pcharacter.SetY(100)
+		pcharacter.SetY(2)
 	} else if name == "blue" {
-		pcharacter.SetX(100)
+		pcharacter.SetX(4)
 	} else if name == "yellow" {
-		pcharacter.SetY(150)
+		pcharacter.SetY(5)
 	}
 	config.AddClicker(&pcharacter)
 	return &pcharacter
@@ -75,6 +77,13 @@ func (p *PCharacter) Update() {
 		dx := float64(target.X) - p.GetX()
 		dy := float64(target.Y) - p.GetY()
 		dist := math.Hypot(dx, dy)
+		/*
+			fmt.Printf("TARGET: %+v\n", target)
+			fmt.Printf("DISTANCE: %+v\n", dist)
+			fmt.Printf("pX: %+v\n", p.GetX())
+			fmt.Printf("pY: %+v\n", p.GetY())
+			fmt.Println("--------------------------")
+		*/
 
 		if dist == 0 {
 			return
@@ -85,39 +94,10 @@ func (p *PCharacter) Update() {
 
 		p.SetPosition(p.GetX()+dxnorm*p.Speed, p.GetY()+dynorm*p.Speed)
 
-		//is it correct? what about diagonal
-		//TODO not sure if this is great
 		if math.Abs(p.GetX()-float64(target.X)) <= p.Speed && math.Abs(p.GetY()-float64(target.Y)) <= p.Speed {
 			p.SetX(float64(target.X))
 			p.SetY(float64(target.Y))
 			p.PathProgress++
-		}
-
-	}
-
-	//TODO do FLOCKING behaviour
-	if p.DestinationX != nil && p.DestinationY != nil {
-		dx := *p.DestinationX - p.GetX()
-		dy := *p.DestinationY - p.GetY()
-
-		dist := math.Hypot(dx, dy)
-		p.DestinationDist = &dist
-
-		/*
-			if p.Angle < p.AngleDestination-p.AngleTolerance {
-				p.Angle += p.TurnSpeed
-			}
-
-			if p.Angle > p.AngleDestination+p.AngleTolerance {
-				p.Angle -= p.TurnSpeed
-			}
-		*/
-
-		if dist > config.Tolerance {
-			dxnorm := dx / dist
-			dynorm := dy / dist
-
-			p.SetPosition(p.GetX()+dxnorm*p.Speed, p.GetY()+dynorm*p.Speed)
 		}
 	}
 }
@@ -150,7 +130,7 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 
 	opts := ebiten.DrawImageOptions{}
 
-	camera.WorldToScreenGeom(&opts, int(p.GetX()), int(p.GetY()))
+	camera.WorldToScreenGeom(&opts, int(p.GetX()*config.TileSize), int(p.GetY()*config.TileSize))
 	circle, _, err := ebitenutil.NewImageFromFile("assets/images/circle.png")
 	if err != nil {
 		return
@@ -172,6 +152,25 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 		}
 
 	}
+
+	//path
+	if len(p.Path) != 0 {
+		if p.PathProgress < 1 {
+
+			//TODO add screentoworld
+			//TODO add walkable=false
+			vector.StrokeLine(screen, float32(p.GetX())*config.TileSize+config.TileSize/2, float32(p.GetY())*config.TileSize+config.TileSize/2, float32(p.Path[0].X*config.TileSize+config.TileSize/2), float32(p.Path[0].Y*config.TileSize+config.TileSize/2), 1, color.RGBA{255, 0, 0, 255}, false)
+		}
+
+		for i, node := range p.Path {
+			if i >= p.PathProgress {
+				if i < len(p.Path)-1 {
+					vector.StrokeLine(screen, float32(node.X*config.TileSize+config.TileSize/2), float32(node.Y*config.TileSize+config.TileSize/2), float32(p.Path[i+1].X*config.TileSize+config.TileSize/2), float32(p.Path[i+1].Y*config.TileSize+config.TileSize/2), 1, color.RGBA{255, 0, 0, 255}, false)
+				}
+
+			}
+		}
+	}
 }
 
 func (p *PCharacter) OnClick() {
@@ -188,8 +187,8 @@ func (p *PCharacter) ClickCollision(x int, y int, camera config.Camera) bool {
 	case *CircleSprite:
 
 		worldx, worldy := camera.ScreenToWorld(float64(x), float64(y))
-		dx := worldx - p.GetX() - config.TileSize/2
-		dy := worldy - p.GetY() - config.TileSize/2
+		dx := worldx - p.GetX()*config.TileSize - config.TileSize/2
+		dy := worldy - p.GetY()*config.TileSize - config.TileSize/2
 
 		distance := math.Pow(dx, 2) + math.Pow(dy, 2)
 		if distance <= value.R_2 {
@@ -218,8 +217,8 @@ func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, c
 	endx = endx + int(camera.X)
 	endy = endy + int(camera.Y)
 
-	charx := p.GetX() + config.TileSize/2
-	chary := p.GetY() + config.TileSize/2
+	charx := p.GetX()*config.TileSize + config.TileSize/2
+	chary := p.GetY()*config.TileSize + config.TileSize/2
 
 	rectLeft := math.Min(float64(startx), float64(endx))
 	rectRight := math.Max(float64(startx), float64(endx))
