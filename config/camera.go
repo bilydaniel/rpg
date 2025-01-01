@@ -18,6 +18,13 @@ func (c *Camera) ScreenToWorld(x, y float64) (worldx float64, worldy float64) {
 	return
 }
 
+func (c *Camera) WorldToScreen(x, y float64) (worldx float64, worldy float64) {
+	worldx = (x / c.Scale) + c.X*c.Speed
+	worldy = (y / c.Scale) + c.Y*c.Speed
+
+	return
+}
+
 func (c *Camera) WorldToScreenGeom(opts *ebiten.DrawImageOptions, x int, y int) {
 	if opts != nil {
 		opts.GeoM.Translate(float64(x), float64(y))

@@ -155,19 +155,31 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 
 	//path
 	if len(p.Path) != 0 {
+		opt := ebiten.GeoM{}
+		opt.Translate(-camera.X*camera.Speed, -camera.Y*camera.Speed)
+		opt.Scale(camera.Scale, camera.Scale)
 		if p.PathProgress < 1 {
 
-			//TODO add screentoworld
 			//TODO add walkable=false
-			vector.StrokeLine(screen, float32(p.GetX())*config.TileSize+config.TileSize/2, float32(p.GetY())*config.TileSize+config.TileSize/2, float32(p.Path[0].X*config.TileSize+config.TileSize/2), float32(p.Path[0].Y*config.TileSize+config.TileSize/2), 1, color.RGBA{255, 0, 0, 255}, false)
+			x0, y0 := p.GetX()*config.TileSize+config.TileSize/2, p.GetY()*config.TileSize+config.TileSize/2
+			x1, y1 := float64(p.Path[0].X)*config.TileSize+config.TileSize/2, float64(p.Path[0].Y)*config.TileSize+config.TileSize/2
+
+			sx, sy := opt.Apply(x0, y0)
+			ex, ey := opt.Apply(x1, y1)
+			vector.StrokeLine(screen, float32(sx), float32(sy), float32(ex), float32(ey), 1, color.RGBA{255, 0, 0, 255}, false)
 		}
 
 		for i, node := range p.Path {
 			if i >= p.PathProgress {
 				if i < len(p.Path)-1 {
-					vector.StrokeLine(screen, float32(node.X*config.TileSize+config.TileSize/2), float32(node.Y*config.TileSize+config.TileSize/2), float32(p.Path[i+1].X*config.TileSize+config.TileSize/2), float32(p.Path[i+1].Y*config.TileSize+config.TileSize/2), 1, color.RGBA{255, 0, 0, 255}, false)
-				}
+					x0, y0 := float64(node.X*config.TileSize+config.TileSize/2), float64(node.Y*config.TileSize+config.TileSize/2)
+					x1, y1 := float64(p.Path[i+1].X*config.TileSize+config.TileSize/2), float64(p.Path[i+1].Y*config.TileSize+config.TileSize/2)
 
+					sx, sy := opt.Apply(x0, y0)
+					ex, ey := opt.Apply(x1, y1)
+
+					vector.StrokeLine(screen, float32(sx), float32(sy), float32(ex), float32(ey), 1, color.RGBA{255, 0, 0, 255}, false)
+				}
 			}
 		}
 	}
@@ -211,11 +223,13 @@ func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, c
 		fmt.Errorf("Unknown collision type")
 		return false
 	}
+	worldx, worldy := camera.ScreenToWorld(float64(startx), float64(starty))
+	startx = int(worldx)
+	starty = int(worldy)
 
-	startx = startx + int(camera.X)
-	starty = starty + int(camera.Y)
-	endx = endx + int(camera.X)
-	endy = endy + int(camera.Y)
+	worldx, worldy = camera.ScreenToWorld(float64(endx), float64(endy))
+	endx = int(worldx)
+	endy = int(worldy)
 
 	charx := p.GetX()*config.TileSize + config.TileSize/2
 	chary := p.GetY()*config.TileSize + config.TileSize/2

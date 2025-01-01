@@ -71,6 +71,7 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 }
 
 func (l *Level) NodeFromPoint(point utils.Point) *utils.Node {
+	//TODO breaks when I zoom out really far, out of bounds, probably just put a max to the zoomout
 	x := int(point.X / config.TileSize)
 	y := int(point.Y / config.TileSize)
 
