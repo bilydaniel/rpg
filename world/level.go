@@ -36,9 +36,9 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 	opts := ebiten.DrawImageOptions{}
 	for y := 0; y < len(l.Grid); y++ {
 		for x := 0; x < len(l.Grid[y]); x++ {
-			tileid := l.Grid[y][x]
+			tile := l.Grid[y][x]
 			//TODO REMOVE HARDCODE
-			image := assets.GetTileImage(l.SourceData["floors"].Name, l.SourceData["floors"].Image, l.SourceData["floors"].Columns, tileid.ID)
+			image := assets.GetTileImage(l.SourceData["floors"].Name, l.SourceData["floors"].Image, l.SourceData["floors"].Columns, tile.ID)
 			if image != nil {
 				opts.GeoM.Reset()
 				cam.WorldToScreenGeom(&opts, x*config.TileSize, y*config.TileSize)
@@ -170,6 +170,21 @@ func (l *Level) LoadLevel() error {
 			if layer.Name == "buildings" {
 				for _, v := range layer.Objects {
 					l.Obstacles[layer.Name] = append(l.Obstacles[layer.Name], v)
+					//TODO solve rotation
+					xgrid := v.X / 16
+					ygrid := v.Y / 16
+
+					heightgrid := v.Height / 16
+					widthgrid := v.Width / 16
+					l.Grid[ygrid][xgrid].Walkable = false
+					for i := 0; i < heightgrid; i++ {
+						l.Grid[ygrid+i][xgrid].Walkable = false
+						l.Grid[ygrid+i][xgrid+widthgrid-1].Walkable = false
+					}
+					for j := 0; j < widthgrid; j++ {
+						l.Grid[ygrid][xgrid+j].Walkable = false
+						l.Grid[ygrid+heightgrid-1][xgrid+j].Walkable = false
+					}
 				}
 			}
 		}
