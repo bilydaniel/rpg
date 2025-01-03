@@ -38,9 +38,7 @@ func InitPCharacter(name string) *PCharacter {
 			R_2: r_2,
 		},
 		Character: Character{
-			Speed:          1 / 30.0,
-			TurnSpeed:      0.1,
-			AngleTolerance: 0.0,
+			Speed: 1 / 30.0,
 		},
 		Path: []utils.Node{},
 	}
@@ -77,13 +75,6 @@ func (p *PCharacter) Update() {
 		dx := float64(target.X) - p.GetX()
 		dy := float64(target.Y) - p.GetY()
 		dist := math.Hypot(dx, dy)
-		/*
-			fmt.Printf("TARGET: %+v\n", target)
-			fmt.Printf("DISTANCE: %+v\n", dist)
-			fmt.Printf("pX: %+v\n", p.GetX())
-			fmt.Printf("pY: %+v\n", p.GetY())
-			fmt.Println("--------------------------")
-		*/
 
 		if dist == 0 {
 			return
@@ -248,15 +239,4 @@ func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, c
 	distance := math.Hypot(distancex, distancey)
 
 	return distance <= circleCollision.R
-}
-
-func (p *PCharacter) SetDestination(x int, y int, camera config.Camera) {
-	worldx, worldy := camera.ScreenToWorld(float64(x), float64(y))
-
-	p.DestinationX = &worldx
-	p.DestinationY = &worldy
-
-	dx := *p.DestinationX - p.GetX()
-	dy := *p.DestinationY - p.GetY()
-	p.AngleDestination = math.Atan2(-dy, dx)
 }
