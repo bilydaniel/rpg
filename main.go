@@ -6,7 +6,6 @@ import (
 	"bilydaniel/rpg/entities"
 	"bilydaniel/rpg/utils"
 	"bilydaniel/rpg/world"
-	"fmt"
 	"log"
 	"strconv"
 
@@ -34,8 +33,13 @@ func initGame() (*Game, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	pcharacters, err := entities.InitPCharacters()
+	if err != nil {
+		return nil, err
+	}
 	return &Game{
-		PCharacters: entities.InitPCharacters(),
+		PCharacters: pcharacters,
 		World:       worldInstance,
 		Camera:      &config.Camera{X: 0, Y: 0, Scale: 1.0, Speed: 2.0}, //TODO make an init function
 		Drag:        &utils.Drag{},
@@ -58,10 +62,14 @@ func (g *Game) Update() error {
 		g.Camera.Y += 2
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyR) {
-		g.Camera.Scale -= 0.01
+		if g.Camera.Scale > 0.8 {
+			g.Camera.Scale -= 0.01
+		}
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyF) {
-		g.Camera.Scale += 0.01
+		if g.Camera.Scale < 2 {
+			g.Camera.Scale += 0.01
+		}
 	}
 
 	//TODO gonna need to change clicking, think it through
@@ -135,13 +143,16 @@ func (g *Game) Update() error {
 
 				pchar.Path = path
 				pchar.PathProgress = 0
-				fmt.Printf("PATH: %+v\n", path)
 			}
 		}
 	}
 
 	for _, pchar := range g.PCharacters {
 		pchar.Update()
+	}
+
+	for _, npc := range g.World.CurrentLevel.Npcs {
+		npc.Update()
 	}
 
 	return nil
@@ -165,6 +176,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for _, character := range g.PCharacters {
 		if character != nil {
 			character.Draw(screen, *g.Camera)
+		}
+	}
+
+	for _, npc := range g.World.CurrentLevel.Npcs {
+		if npc != nil {
+			npc.Draw(screen, *g.Camera)
 		}
 	}
 

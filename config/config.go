@@ -1,11 +1,11 @@
 package config
 
 const (
-	ScreenW = 400 //TODO figure out better resolution
-	ScreenH = 240
+	ScreenW = 640 //TODO figure out better resolution
+	ScreenH = 360
 
-	WindowW = 1280
-	WindowH = 960
+	WindowW = ScreenW * 2
+	WindowH = ScreenH * 2
 
 	GameName = "RPG"
 
@@ -20,6 +20,5 @@ func init() {
 		0: "red",
 		1: "green",
 		2: "blue",
-		3: "yellow",
 	}
 }

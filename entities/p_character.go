@@ -25,9 +25,15 @@ type PCharacter struct {
 	Character
 }
 
-func InitPCharacter(name string) *PCharacter {
+func InitPCharacter(name string) (*PCharacter, error) {
 	r := 8.0
 	r_2 := r * r
+
+	image, _, err := ebitenutil.NewImageFromFile("assets/images/cavegirl.png")
+
+	if err != nil {
+		return nil, err
+	}
 	pcharacter := PCharacter{
 		Name:     name,
 		Selected: false,
@@ -36,6 +42,7 @@ func InitPCharacter(name string) *PCharacter {
 			Y:   0,
 			R:   r,
 			R_2: r_2,
+			Img: image,
 		},
 		Character: Character{
 			Speed: 1 / 30.0,
@@ -48,19 +55,22 @@ func InitPCharacter(name string) *PCharacter {
 		pcharacter.SetY(2)
 	} else if name == "blue" {
 		pcharacter.SetX(4)
-	} else if name == "yellow" {
-		pcharacter.SetY(5)
 	}
 	config.AddClicker(&pcharacter)
-	return &pcharacter
+
+	return &pcharacter, nil
 }
 
-func InitPCharacters() []*PCharacter {
+func InitPCharacters() ([]*PCharacter, error) {
 	characters := []*PCharacter{}
-	for i := 0; i < 4; i++ {
-		characters = append(characters, InitPCharacter(config.PlayableCharacters[i]))
+	for i := 0; i < 3; i++ {
+		character, err := InitPCharacter(config.PlayableCharacters[i])
+		if err != nil {
+			return nil, err
+		}
+		characters = append(characters, character)
 	}
-	return characters
+	return characters, nil
 }
 
 func (p *PCharacter) Update() {
@@ -72,6 +82,7 @@ func (p *PCharacter) Update() {
 		}
 
 		target := p.Path[p.PathProgress]
+
 		dx := float64(target.X) - p.GetX()
 		dy := float64(target.Y) - p.GetY()
 		dist := math.Hypot(dx, dy)
@@ -96,28 +107,6 @@ func (p *PCharacter) Update() {
 func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 
 	//pcolor := color.RGBA{0, 255, 0, 255}
-	tile := &ebiten.Image{}
-	var err error
-	if p.Name == "red" {
-		//pcolor = color.RGBA{255, 0, 0, 125}
-		tile, _, err = ebitenutil.NewImageFromFile("assets/images/cavegirl.png")
-	}
-	if p.Name == "green" {
-		//pcolor = color.RGBA{0, 255, 0, 125}
-		tile, _, err = ebitenutil.NewImageFromFile("assets/images/greenchar.png")
-	}
-	if p.Name == "blue" {
-		//pcolor = color.RGBA{0, 0, 255, 125}
-		tile, _, err = ebitenutil.NewImageFromFile("assets/images/bluechar.png")
-	}
-	if p.Name == "yellow" {
-		//pcolor = color.RGBA{255, 255, 0, 125}
-		tile, _, err = ebitenutil.NewImageFromFile("assets/images/yellowchar.png")
-	}
-	//TODO ERROR HANDLE
-	if err != nil {
-		return
-	}
 
 	opts := ebiten.DrawImageOptions{}
 
@@ -130,7 +119,7 @@ func (p *PCharacter) Draw(screen *ebiten.Image, camera config.Camera) {
 	if p.Selected {
 		screen.DrawImage(circle, &opts)
 	}
-	screen.DrawImage(tile, &opts)
+	screen.DrawImage(p.Image(), &opts)
 
 	if p.DestinationX != nil && p.DestinationY != nil {
 		if p.DestinationDist != nil && *p.DestinationDist > float64(config.Tolerance) {

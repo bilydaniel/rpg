@@ -21,17 +21,38 @@ import (
 	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type Level struct {
-	Name       string
-	Grid       [][]*Tile
-	Width      int            //Number of tiles
-	Height     int            //Number of tiles
-	Sources    map[string]int //source => firstgid
-	SourceData map[string]*assets.TilesetData
-	Obstacles  map[string][]assets.Object
-	Npcs       map[string]entities.Npc
+	Name             string
+	Grid             [][]*Tile
+	Width            int            //Number of tiles
+	Height           int            //Number of tiles
+	Sources          map[string]int //source => firstgid
+	SourceData       map[string]*assets.TilesetData
+	Obstacles        map[string][]assets.Object
+	Npcs             map[string]*entities.Npc
+	DynamicObstacles map[string]*entities.Sprite
+}
+
+func InitLevel() Level {
+	l := Level{}
+
+	if l.Sources == nil {
+		l.Sources = map[string]int{}
+	}
+	if l.SourceData == nil {
+		l.SourceData = map[string]*assets.TilesetData{}
+	}
+	if l.Obstacles == nil {
+		l.Obstacles = map[string][]assets.Object{}
+	}
+	if l.DynamicObstacles == nil {
+		l.DynamicObstacles = map[string]*entities.Sprite{}
+	}
+
+	return l
 }
 
 func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Assets) {
@@ -70,6 +91,7 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 			screen.DrawImage(image, &opts)
 		}
 	}
+
 }
 
 func (l *Level) NodeFromPoint(point utils.Point) *utils.Node {
@@ -98,21 +120,32 @@ func (l *Level) ResetValues() {
 	}
 }
 
-func (l *Level) LoadLevel() error {
-	for i := 0; i < 100; i++ {
-		id := strconv.Itoa(i)
-		l.Npcs[id] = entities.Npc{Sprite: &entities.CircleSprite{X: float64(i), Y: float64(i)}}
+func (l *Level) LoadLevel(name string) error {
+	l.Name = name
+
+	npcs := map[string]*entities.Npc{}
+	//TODO put into assets
+	image, _, err := ebitenutil.NewImageFromFile("assets/images/greenchar.png")
+	if err != nil {
+		return err
 	}
 
-	if l.Sources == nil {
-		l.Sources = map[string]int{}
+	for i := 0; i < 100; i++ {
+		id := strconv.Itoa(i)
+		npcs[id] = &entities.Npc{
+			Sprite: &entities.CircleSprite{
+				X:   float64(i),
+				Y:   float64(i),
+				Img: image,
+			},
+			Character: entities.Character{
+				Speed:    1.0 / 30,
+				Movement: 1.0 / 30,
+			},
+		}
+		l.DynamicObstacles[id] = &npcs[id].Sprite
 	}
-	if l.SourceData == nil {
-		l.SourceData = map[string]*assets.TilesetData{}
-	}
-	if l.Obstacles == nil {
-		l.Obstacles = map[string][]assets.Object{}
-	}
+	l.Npcs = npcs
 
 	tilemap, err := assets.LoadTilemap(l.Name)
 	if err != nil {
