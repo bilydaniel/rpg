@@ -148,11 +148,11 @@ func (g *Game) Update() error {
 	}
 
 	for _, pchar := range g.PCharacters {
-		pchar.Update()
+		pchar.Update(g.World.CurrentLevel)
 	}
 
-	for _, npc := range g.World.CurrentLevel.Npcs {
-		npc.Update()
+	for _, npc := range g.World.Npcs {
+		npc.Update(g.World.CurrentLevel)
 	}
 
 	return nil
@@ -179,9 +179,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	for _, npc := range g.World.CurrentLevel.Npcs {
+	for _, npc := range g.World.Npcs {
 		if npc != nil {
+			//if npc.LevelName == g.World.CurrentLevel.Name {
 			npc.Draw(screen, *g.Camera)
+			//}
 		}
 	}
 

@@ -12,7 +12,6 @@ type Tile struct {
 	G, H, F  float64
 	Parent   *Tile
 	Walkable bool //TODO change to something more complex, gonna need to check for building, enemies, etc.
-	Occupied bool
 }
 
 type PathFinder struct {

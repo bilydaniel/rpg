@@ -73,7 +73,7 @@ func InitPCharacters() ([]*PCharacter, error) {
 	return characters, nil
 }
 
-func (p *PCharacter) Update() {
+func (p *PCharacter) Update(level Level) {
 	if len(p.Path) > 0 {
 		if p.PathProgress > len(p.Path)-1 {
 			p.Path = []utils.Node{}
@@ -82,6 +82,10 @@ func (p *PCharacter) Update() {
 		}
 
 		target := p.Path[p.PathProgress]
+		if level.OccupiedTile(&target) {
+			p.ResetWalking()
+			return
+		}
 
 		dx := float64(target.X) - p.GetX()
 		dy := float64(target.Y) - p.GetY()
@@ -228,4 +232,9 @@ func (p *PCharacter) RectCollision(startx int, starty int, endx int, endy int, c
 	distance := math.Hypot(distancex, distancey)
 
 	return distance <= circleCollision.R
+}
+
+func (p *PCharacter) ResetWalking() {
+	p.Path = []utils.Node{}
+	p.PathProgress = 0
 }

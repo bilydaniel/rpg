@@ -18,22 +18,19 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type Level struct {
-	Name             string
-	Grid             [][]*Tile
-	Width            int            //Number of tiles
-	Height           int            //Number of tiles
-	Sources          map[string]int //source => firstgid
-	SourceData       map[string]*assets.TilesetData
-	Obstacles        map[string][]assets.Object
-	Npcs             map[string]*entities.Npc
-	DynamicObstacles map[string]*entities.Sprite
+	Name       string
+	Grid       [][]*Tile
+	Occupancy  [][]entities.Sprite //TODO probably something else than sprite
+	Width      int                 //Number of tiles
+	Height     int                 //Number of tiles
+	Sources    map[string]int      //source => firstgid
+	SourceData map[string]*assets.TilesetData
+	Obstacles  map[string][]assets.Object
 }
 
 func InitLevel() Level {
@@ -47,9 +44,6 @@ func InitLevel() Level {
 	}
 	if l.Obstacles == nil {
 		l.Obstacles = map[string][]assets.Object{}
-	}
-	if l.DynamicObstacles == nil {
-		l.DynamicObstacles = map[string]*entities.Sprite{}
 	}
 
 	return l
@@ -123,30 +117,6 @@ func (l *Level) ResetValues() {
 func (l *Level) LoadLevel(name string) error {
 	l.Name = name
 
-	npcs := map[string]*entities.Npc{}
-	//TODO put into assets
-	image, _, err := ebitenutil.NewImageFromFile("assets/images/greenchar.png")
-	if err != nil {
-		return err
-	}
-
-	for i := 0; i < 100; i++ {
-		id := strconv.Itoa(i)
-		npcs[id] = &entities.Npc{
-			Sprite: &entities.CircleSprite{
-				X:   float64(i),
-				Y:   float64(i),
-				Img: image,
-			},
-			Character: entities.Character{
-				Speed:    1.0 / 30,
-				Movement: 1.0 / 30,
-			},
-		}
-		l.DynamicObstacles[id] = &npcs[id].Sprite
-	}
-	l.Npcs = npcs
-
 	tilemap, err := assets.LoadTilemap(l.Name)
 	if err != nil {
 		return err
@@ -186,6 +156,11 @@ func (l *Level) LoadLevel(name string) error {
 	}
 	l.Height = tilemap.Height
 	l.Width = tilemap.Width
+
+	l.Occupancy = make([][]entities.Sprite, l.Height)
+	for i := 0; i < l.Height; i++ {
+		l.Occupancy[i] = make([]entities.Sprite, l.Width)
+	}
 
 	l.Grid = make([][]*Tile, l.Height)
 	for _, layer := range tilemap.Layers {
@@ -230,4 +205,22 @@ func (l *Level) LoadLevel(name string) error {
 		}
 	}
 	return nil
+}
+
+func (level *Level) WalkableTile(node *utils.Node) bool {
+	return level.Grid[node.Y][node.X].Walkable
+}
+
+func (level *Level) OccupiedTile(node *utils.Node) bool {
+	return level.Occupancy[node.Y][node.X] != nil
+}
+
+func (level *Level) SetTileOccupied(sprite entities.Sprite, x, y int) {
+	if x < 0 || y < 0 {
+		return
+	}
+	if x >= level.Width || y >= level.Height {
+		return
+	}
+	level.Occupancy[y][x] = sprite
 }
