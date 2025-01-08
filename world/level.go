@@ -23,14 +23,15 @@ import (
 )
 
 type Level struct {
-	Name       string
-	Grid       [][]*Tile
-	Occupancy  [][]entities.Sprite //TODO probably something else than sprite
-	Width      int                 //Number of tiles
-	Height     int                 //Number of tiles
-	Sources    map[string]int      //source => firstgid
-	SourceData map[string]*assets.TilesetData
-	Obstacles  map[string][]assets.Object
+	Name           string
+	Grid           [][]*Tile
+	Occupancy      [][]entities.Sprite //TODO probably something else than sprite
+	Width          int                 //Number of tiles
+	Height         int                 //Number of tiles
+	Sources        map[string]int      //source => firstgid
+	SourceData     map[string]*assets.TilesetData
+	Obstacles      map[string][]assets.Object
+	LightingSystem *LightingSystem
 }
 
 func InitLevel() Level {
@@ -156,6 +157,12 @@ func (l *Level) LoadLevel(name string) error {
 	}
 	l.Height = tilemap.Height
 	l.Width = tilemap.Width
+
+	l.LightingSystem, err = NewLightingSystem(l.Width, l.Height)
+	if err != nil {
+		return err
+	}
+	l.LightingSystem.AddLight(0, 0)
 
 	l.Occupancy = make([][]entities.Sprite, l.Height)
 	for i := 0; i < l.Height; i++ {
