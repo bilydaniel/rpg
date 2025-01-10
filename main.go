@@ -170,7 +170,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrint(screen, strconv.Itoa(int(ebiten.ActualFPS())))
 	}
 	if g.World != nil && g.World.CurrentLevel != nil {
-		g.World.CurrentLevel.Draw(screen, g.Camera, *g.Assets)
+		g.World.CurrentLevel.Draw(screen, g.Camera, *g.Assets, g.PCharacters)
 	}
 
 	for _, character := range g.PCharacters {

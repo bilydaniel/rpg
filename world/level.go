@@ -50,8 +50,9 @@ func InitLevel() Level {
 	return l
 }
 
-func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Assets) {
+func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Assets, pcharacters []*entities.PCharacter) {
 	opts := ebiten.DrawImageOptions{}
+	worldImage := ebiten.NewImage(screen.Bounds().Dx(), screen.Bounds().Dy())
 	for y := 0; y < len(l.Grid); y++ {
 		for x := 0; x < len(l.Grid[y]); x++ {
 			tile := l.Grid[y][x]
@@ -60,7 +61,9 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 			if image != nil {
 				opts.GeoM.Reset()
 				cam.WorldToScreenGeom(&opts, x*config.TileSize, y*config.TileSize)
-				screen.DrawImage(image, &opts)
+
+				//screen.DrawImage(image, &opts)
+				worldImage.DrawImage(image, &opts)
 			}
 		}
 	}
@@ -83,9 +86,12 @@ func (l *Level) Draw(screen *ebiten.Image, cam *config.Camera, assets assets.Ass
 		if image != nil {
 			opts.GeoM.Reset()
 			cam.WorldToScreenGeom(&opts, v.X, v.Y)
-			screen.DrawImage(image, &opts)
+			//screen.DrawImage(image, &opts)
+			worldImage.DrawImage(image, &opts)
 		}
 	}
+
+	l.LightingSystem.Draw(screen, worldImage, pcharacters)
 
 }
 
